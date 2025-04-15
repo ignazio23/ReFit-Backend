@@ -1,0 +1,67 @@
+# ========================
+# DJANGO / ReFit App
+# ========================
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+.pyc
+
+# Archivos de entorno
+.env
+*.env
+.env*
+*.pem
+
+# Archivos de base de datos locales
+*.sqlite3
+
+# Carpeta de medios (imágenes subidas, etc.)
+media/
+static/
+
+# Logs y backups
+*.log
+*.bak
+*.tmp
+test.log
+
+# Django migrations (si querés trackearlas, quitá esta línea)
+*/migrations/*.py
+*/migrations/__pycache__/
+
+# ========================
+# ENTORNOS VIRTUALES
+# ========================
+venv/
+env/
+
+# ========================
+# IDEs y editores
+# ========================
+
+# VSCode
+.vscode/
+
+# PyCharm / JetBrains
+.idea/
+*.iml
+
+# ========================
+# SISTEMA OPERATIVO
+# ========================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# ========================
+# PARA CARGAR A PROD
+# ========================
+Docker/
+Dockerfile
+docker-compose.yml
