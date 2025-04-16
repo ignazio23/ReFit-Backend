@@ -1,5 +1,6 @@
 from .base import *
 from sshtunnel import SSHTunnelForwarder
+from decouple import config
 import os
 
 # ==========================================================================
@@ -34,11 +35,11 @@ if USE_SSH_TUNNEL:
 # Configuración base de datos
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config("DB_NAME"),
-        'USER': config("DB_USER"),
-        'PASSWORD': config("DB_PASSWORD"),
-        'HOST': os.environ.get("DB_HOST", config("DB_HOST")),
-        'PORT': config("DB_PORT", cast=int),
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME':config("DB_NAME"),
+        'USER':config("DB_USER"),
+        'PASSWORD':config("DB_PASSWORD"),
+        'HOST':os.environ.get("DB_HOST", config("DB_HOST")),
+        'PORT':config("DB_PORT", cast=int),
     }
 }

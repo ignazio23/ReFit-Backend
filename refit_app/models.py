@@ -101,6 +101,9 @@ class PasswordRecovery(models.Model):
     def __str__(self):
         return f"Token para {self.usuario.email}"
     
+    class Meta:
+        db_table = '"PASSWORD_RECOVERY"'
+    
 # --------------------------------------------------------------------------
 # PRODUCTOS
 # --------------------------------------------------------------------------
@@ -215,8 +218,9 @@ class RedeemProduct(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'Producto Canjeado'
+        verbose_name = '"PRODUCTOS_CANJEADOS"'
         verbose_name_plural = 'Productos Canjeados'
+        db_table = 'rf_historial_canje_productos'
 
     def __str__(self):
         return f"Producto: {self.product}, Usuario: {self.user.email}"
@@ -383,6 +387,7 @@ class UserFollowing(models.Model):
     class Meta:
         verbose_name = 'Usuario que sigue'
         verbose_name_plural = 'Seguimientos'
+        db_table = '"USER_FOLLOWING"'
 
     def __str__(self):
         return f"{self.user.email} sigue a {self.following.email}"

@@ -1,5 +1,6 @@
 from .base import *
 from sshtunnel import SSHTunnelForwarder
+from decouple import config
 import os
 
 # ==========================================================================
