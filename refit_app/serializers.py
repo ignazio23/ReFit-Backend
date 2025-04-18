@@ -354,7 +354,7 @@ class CategoriaSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Categoria
-        fields = ('id', 'codigo', 'nombre', 'fecha_creacion')
+        fields = ('id', 'codigo', 'nombre')
 
 class ProductoCategoriaSerializer(serializers.ModelSerializer):
     """

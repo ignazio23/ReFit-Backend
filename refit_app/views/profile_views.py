@@ -5,6 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+import uuid
+import os
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
 from refit_app.serializers import (
     EditProfilePictureSerializer,
@@ -56,46 +60,43 @@ class UserDetailView(APIView):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 # --------------------------------------------------------------------------
-# Edición parcial del perfil autenticado
+# Edición de imagen de perfil
 # --------------------------------------------------------------------------
-class EditProfilePictureView(APIView):
+class UploadProfilePictureView(APIView):
     """
-    Asocia una imagen subida previamente al perfil del usuario.
-    Requiere enviar: { "imagen_id": 5 }
+    Permite subir una imagen de perfil directamente desde la app (multipart/form-data).
+    Guarda el archivo y lo asigna al perfil del usuario autenticado.
     """
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
-        """
-        Actualiza la imagen de perfil del usuario autenticado.
-        """
-        imagen_id = request.data.get("imagen_id")
-        uuid = request.data.get("uuid")
-        uuid_completo = request.data.get("uuid_completo")
+        archivo = request.FILES.get("image")
 
-        imagen = None
+        if not archivo:
+            return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
 
-        if imagen_id:
-            imagen = Imagen.objects.filter(pk_imagenes=imagen_id).first()
-        elif uuid:
-            imagen = Imagen.objects.filter(uuid=uuid).first()
-        elif uuid_completo:
-            if "." in uuid_completo:
-                uuid_part, ext = uuid_completo.rsplit(".", 1)
-                imagen = Imagen.objects.filter(uuid=uuid_part, extension=f".{ext.lower()}").first()
+        ext = os.path.splitext(archivo.name)[-1].lower()
+        if ext not in ['.jpg', '.jpeg', '.png']:
+            return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
-        if not imagen:
-            return Response({"error": "Imagen no encontrada. Verifique el identificador proporcionado."},
-                            status=HTTP_400_BAD_REQUEST)
+        # Guardado en /media/public con nombre estandarizado
+        img_uuid = str(uuid.uuid4())
+        filename = f"{request.user.id}_profile{ext}"
+        ruta_publica = os.path.join("public", filename)
+        default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
+        imagen = Imagen.objects.create(uuid=img_uuid, extension=ext)
         request.user.image = imagen
         request.user.save()
 
         return Response({
-            "detail": "Imagen de perfil actualizada correctamente.",
-            "image_url": f"/media/{imagen.uuid}{imagen.extension}"
+            "message": "Imagen de perfil subida y asignada correctamente.",
+            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
-    
+
+# --------------------------------------------------------------------------
+# Edición de datos personales y objetivo diario
+# --------------------------------------------------------------------------
 class EditPersonalDataView(APIView):
     """
     Permite actualizar nombre, apellidos y email del usuario autenticado.
@@ -114,6 +115,9 @@ class EditPersonalDataView(APIView):
         logger.error("Error al actualizar datos personales para el usuario %s: %s", request.user.email, serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
+# --------------------------------------------------------------------------
+# Edición del objetivo diario
+# --------------------------------------------------------------------------
 class EditDailyGoalView(APIView):
     """
     Permite modificar el objetivo diario de pasos del usuario autenticado.
