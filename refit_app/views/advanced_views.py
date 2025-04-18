@@ -99,9 +99,6 @@ class UploadImageView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """
-        Guarda una imagen en el servidor y registra su UUID y extensión.
-        """
         archivo = request.FILES.get('imagen')
 
         if not archivo:
@@ -112,17 +109,16 @@ class UploadImageView(APIView):
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
         img_uuid = str(uuid.uuid4())
-        filename = f"{img_uuid}{ext}"
-        path = default_storage.save(filename, ContentFile(archivo.read()))
+        filename = f"{request.user.id}_profilepicture{ext}"
+        ruta_publica = os.path.join("public", filename)
+        path = default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
         imagen = Imagen.objects.create(uuid=img_uuid, extension=ext)
-        serializer = ImagenSerializer(imagen)
 
         return Response({
-            "id": imagen.id,
             "uuid": imagen.uuid,
-            "extension": imagen.extension,
-            "image_url": f"/media/{filename}"
+            "nombre_archivo": filename,
+            "url": f"/media/public/{filename}"
         }, status=HTTP_201_CREATED)
 
 # ============================================================================
@@ -135,16 +131,16 @@ class ServeImageView(APIView):
     """
     def get(self, request, filename):
         """
-        Busca el archivo en la carpeta MEDIA_ROOT y lo devuelve como FileResponse.
-        El tipo MIME se detecta automáticamente según la extensión.
+        Busca una imagen por UUID y devuelve su URL pública completa.
         """
-        file_path = os.path.join(settings.MEDIA_ROOT, filename)
-
-        if not os.path.exists(file_path):
+        try:
+            imagen = Imagen.objects.get(uuid=filename)
+        except Imagen.DoesNotExist:
             return Response({"error": "Imagen no encontrada."}, status=HTTP_404_NOT_FOUND)
 
-        try:
-            mime_type, _ = mimetypes.guess_type(file_path)
-            return FileResponse(open(file_path, 'rb'), content_type=mime_type or 'application/octet-stream')
-        except Exception as e:
-            raise Http404("No se pudo abrir la imagen solicitada.")
+        public_url = f"http://3.17.152.152/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
+
+        return Response({
+            "uuid": imagen.uuid,
+            "url": public_url
+        }, status=HTTP_200_OK)

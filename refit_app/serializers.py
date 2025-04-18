@@ -68,6 +68,26 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 # ------------------------------------------------------------------------------
+# Registro: Serializador de respuesta
+# ------------------------------------------------------------------------------
+# Serializador simple para retornar tras el registro de usuario.
+# Incluye campos básicos como id, email, nombre y apellidos.
+# Este serializador se utiliza para mostrar la información del usuario
+# después de un registro exitoso.
+class RegisterResponseSerializer(serializers.ModelSerializer):
+    def get_profilePicture(self, obj):
+        if obj.image and obj.image.uuid:
+            return obj.image.uuid
+        return None
+    profilePicture = serializers.SerializerMethodField()
+    """
+    Serializador simple para retornar tras el registro de usuario.
+    """
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'nombre', 'apellidos', 'fecha_nacimiento', 'genero', 'codigo_referido', 'profilePicture')
+
+# ------------------------------------------------------------------------------
 # Login: Serializador de respuesta
 # ------------------------------------------------------------------------------
 # Serializer personalizado para la respuesta al iniciar sesión.
@@ -81,7 +101,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     Mapea campos del modelo a nombres más amigables y calcula datos adicionales como
     la posición en el leaderboard.
     """
-    uuid = serializers.SerializerMethodField()
+    profilePicture = serializers.SerializerMethodField()
     #image_url = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     coins = serializers.IntegerField(source='monedas_actuales')
@@ -90,23 +110,13 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     leaderBoardPosition = serializers.SerializerMethodField()
     monthlySteps = serializers.IntegerField(source='pasos_totales')
     firstLogin = serializers.BooleanField(source='first_login')
-    last_login  = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    lastLogin  = serializers.DateTimeField(source='last_login', format="%Y-%m-%d %H:%M:%S", read_only=True)
     updatePassword = serializers.BooleanField(source='update_password')
 
     class Meta:
         model = User
         fields = ('id', 'name', 'email', 'coins', 'dailySteps', 'dailyGoal', 'monthlySteps', 
-                  'leaderBoardPosition', 'firstLogin', 'uuid', 'last_login', 'updatePassword')
-    
-    """
-    def get_image_url(self, obj):
-        ""
-        Retorna la URL completa de la imagen si existe, o None en caso contrario.
-        ""
-        if obj.image and obj.image.uuid:
-            return f"{settings.MEDIA_URL}{obj.image.uuid}{obj.image.extension}"
-        return None
-    """
+                  'leaderBoardPosition', 'firstLogin', 'profilePicture', 'last_login', 'updatePassword')
     
     def get_uuid(self, obj):
         if obj.image and obj.image.uuid:
@@ -136,6 +146,10 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         except ValueError:
             return None
 
+    def get_profilePicture(self, obj):
+        if obj.image and obj.image.uuid:
+            return obj.image.uuid  # UUID limpio, sin extensión ni ruta
+        return None
 # ------------------------------------------------------------------------------
 # Perfil del Usuario (para ediciones y detalles)
 # ------------------------------------------------------------------------------
@@ -406,7 +420,7 @@ class ImagenSerializer(serializers.ModelSerializer):
         Devuelve la URL de la imagen.
         """
         return f"{settings.MEDIA_URL}{obj.uuid}.{obj.extension}"  # Ajustar según cómo sirvas las imágenes
-
+    
 # ------------------------------------------------------------------------------
 # Producto - Imagenes
 # ------------------------------------------------------------------------------

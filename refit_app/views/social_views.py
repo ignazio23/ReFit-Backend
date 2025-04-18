@@ -97,19 +97,21 @@ class LeaderboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Devuelve el top 5 de usuarios con más pasos.
-        """
-        top = User.objects.exclude(is_staff=True).order_by('-pasos_totales')[:5]
-        data = [
-            {
-                "ranking": idx + 1,
-                "username": f"{u.nombre} {u.apellidos}",
-                "monthlySteps": u.pasos_totales
-            }
-            for idx, u in enumerate(top)
-        ]
-        logger.info("User %s requested leaderboard.", request.user.email)
+        top_users = User.objects.filter(is_staff=False).order_by('-pasos_totales')[:5]
+
+        data = []
+        for idx, user in enumerate(top_users, start=1):
+            image_url = None
+            if user.image:
+                image_url = f"http://3.17.152.152/media/public/{user.image.uuid}.{user.image.extension.strip('.')}"
+
+            data.append({
+                "ranking": idx,
+                "image": image_url,
+                "name": f"{user.nombre} {user.apellidos}",
+                "steps": user.pasos_totales
+            })
+
         return Response(data, status=HTTP_200_OK)
     
 # --------------------------------------------------------------------------

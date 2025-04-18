@@ -18,6 +18,7 @@ from refit_app.serializers import (
     ForgotPasswordSerializer,
     RecoverPasswordSerializer,
     ChangePasswordSerializer,
+    RegisterResponseSerializer
 )
 
 from django.contrib.auth import get_user_model
@@ -53,8 +54,10 @@ class RegisterView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             logger.info("Usuario registrado exitosamente: %s", user.email)
-            response_data = LoginResponseSerializer(user).data
+
+            response_data = RegisterResponseSerializer(user).data
             return Response(response_data, status=HTTP_201_CREATED)
+        
         logger.error("Error al registrar usuario: %s", serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -90,8 +93,8 @@ class LoginView(APIView):
             data = LoginResponseSerializer(user).data
 
             # Añade los tokens a la respuesta
-            data["access_token"] = str(tokens.access_token)
-            data["refresh_token"] = str(tokens)
+            data["accessToken"] = str(tokens.access_token)
+            data["refreshToken"] = str(tokens)
 
             logger.info("Usuario autenticado: %s", user.email)
             return Response(data, status=HTTP_200_OK)

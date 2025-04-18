@@ -20,7 +20,7 @@ from refit_app.views.task_views import (
     CheckDailyTaskView, ExchangeDailyTaskView, ObjetivoDiarioCreateView, 
     ObjetivoDiarioListView, ObjetivosActivosUsuarioView, ObjetivoDiarioEditView
 )
-from refit_app.views.step_views import StepCountView, AddStepsView
+from refit_app.views.step_views import StepUpdateView
 from refit_app.views.social_views import FollowingFriendsView, LeaderboardView, UsuarioRankingView
 from refit_app.views.contact_views import ContactUsView
 from refit_app.views.advanced_views import (
@@ -64,10 +64,7 @@ urlpatterns = [
     ])),
 
     # Conteo de pasos diarios
-    path("steps/", include([
-        path("steps/", StepCountView.as_view(), name="pasos-registrar"),
-        path("add/", AddStepsView.as_view(), name="pasos-sumar"),
-    ])),
+    path("steps/", StepUpdateView.as_view(), name="pasos-diarios"),
 
     # Objetivos y tareas diarias
     path("objectives/", include([
