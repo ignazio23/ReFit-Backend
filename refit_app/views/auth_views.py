@@ -154,7 +154,7 @@ class ChangePasswordView(APIView):
         """
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
-            oldPassword  = serializer.validated_data['oldPassword ']
+            oldPassword = serializer.validated_data['oldPassword']
             newPassword = serializer.validated_data['newPassword']
 
             if not request.user.check_password(oldPassword ):
