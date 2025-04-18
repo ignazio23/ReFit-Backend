@@ -11,12 +11,11 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 
-from refit_app.models import User, PasswordRecovery
+from refit_app.models import User
 from refit_app.serializers import (
     UserRegisterSerializer,
     LoginResponseSerializer,
     ChangePasswordSerializer,
-    RegisterResponseSerializer
 )
 
 from django.contrib.auth import get_user_model
