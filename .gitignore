@@ -25,6 +25,7 @@ static/
 *.bak
 *.tmp
 test.log
+test.log.*
 
 # Django migrations (si querés trackearlas, quitá esta línea)
 */migrations/*.py
@@ -60,8 +61,17 @@ Desktop.ini
 .DS_Store
 
 # ========================
-# PARA CARGAR A PROD
+# DEV
 # ========================
 Docker/
 Dockerfile
 docker-compose.yml
+*/local.py
+# ========================
+# TESTING
+# ========================
+*/testing.py
+# ========================
+# PROD
+# ========================
+*/production.py
