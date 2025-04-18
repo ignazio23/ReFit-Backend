@@ -7,7 +7,7 @@ from datetime import datetime, date
 import logging
 
 from refit_app.models import Pasos
-from refit_app.services.objetivos_service import calcular_multiplicador
+from refit_app.views.task_views import calcular_multiplicador
 
 logger = logging.getLogger(__name__)
 
