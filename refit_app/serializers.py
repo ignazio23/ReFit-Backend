@@ -352,9 +352,12 @@ class CategoriaSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización de categorías de productos.
     """
+    code = serializers.CharField(source='codigo')
+    name = serializers.CharField(source='nombre')
+
     class Meta:
         model = Categoria
-        fields = ('id', 'codigo', 'nombre')
+        fields = ('id', 'code', 'name')
 
 class ProductoCategoriaSerializer(serializers.ModelSerializer):
     """
