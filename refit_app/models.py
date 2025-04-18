@@ -74,10 +74,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     fecha_registro = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
+
     first_login = models.BooleanField(default=True)  # Campo agregado para marcar el primer inicio de sesión
     last_login = models.DateTimeField(null=True, blank=True)
 
+    bloqueated = models.BooleanField(default=False)
+    lock_date = models.DateTimeField(null=True, blank=True)
+
     is_active = models.BooleanField(default=True)
+
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 

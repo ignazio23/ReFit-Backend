@@ -148,3 +148,26 @@ class UserLastLoginView(APIView):
         user = request.user
         ultimo_login = user.last_login.strftime("%Y-%m-%d %H:%M:%S") if user.last_login else None
         return Response({"ultimo_login": ultimo_login}, status=HTTP_200_OK)
+
+# --------------------------------------------------------------------------
+# Eliminación lógica de cuenta
+# --------------------------------------------------------------------------   
+class DeleteAccountView(APIView):
+    """
+    Marca la cuenta del usuario autenticado para eliminación lógica en 30 días.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        if user.bloqueated:
+            return Response({"detail": "Ya has solicitado eliminar tu cuenta."}, status=HTTP_400_BAD_REQUEST)
+
+        user.bloqueated = True
+        user.lock_date = timezone.now()
+        user.save()
+
+        logger.info("Usuario %s marcó su cuenta para eliminación lógica.", user.email)
+
+        return Response({"message": "La cuenta será eliminada en 30 días si no inicias sesión."}, status=HTTP_200_OK)

@@ -10,7 +10,7 @@ from refit_app.views.auth_views import (
 )
 from refit_app.views.profile_views import (
     UserDetailView, EditProfilePictureView, EditDailyGoalView, EditPersonalDataView,
-    UserLastLoginView
+    UserLastLoginView, DeleteAccountView
 )
 from refit_app.views.product_views import (
     ProductView, ExchangeProductView, CategoriaCreateView, EditProductImageView,
@@ -62,6 +62,7 @@ urlpatterns = [
         path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),
         path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),
         path("referred/", ReferredUsersView.as_view(), name="user-referred"),
+        path("delete-account/", DeleteAccountView.as_view(), name="delete-account"),
     ])),
 
     # Conteo de pasos diarios

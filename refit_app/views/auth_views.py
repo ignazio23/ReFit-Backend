@@ -80,6 +80,21 @@ class LoginView(APIView):
         user = authenticate(email=email, password=password)
 
         if user:
+            # Validación de bloqueos y reactivación automática
+            if not user.is_active:
+                return Response({"detail": "Cuenta desactivada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
+
+            if user.bloqueated:
+                if user.lock_date and timezone.now() - user.lock_date < timedelta(days=30):
+                    user.bloqueated = False
+                    user.lock_date = None
+                    logger.info("Usuario %s reactivado durante el período de gracia.", user.email)
+                else:
+                    user.is_active = False
+                    user.save()
+                    logger.warning("Usuario %s intentó iniciar sesión tras el plazo de 30 días.", user.email)
+                    return Response({"detail": "Cuenta eliminada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
+
             es_primer_login = user.first_login  # Captura el estado actual
 
             # Genera tokens de acceso y actualización

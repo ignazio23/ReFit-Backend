@@ -43,6 +43,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'password', 'password2', 'nombre', 'apellidos',
                   'fecha_nacimiento', 'genero', 'codigo_referido', 'objetivo_diario')
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value, is_active=True).exists():
+            raise serializers.ValidationError("Ya existe un usuario activo con este email.")
+        return value
+    
     def validate_password(self, value):
         """
         Valida que la contraseña tenga al menos 8 caracteres.
