@@ -111,14 +111,14 @@ class UploadImageView(APIView):
         img_uuid = str(uuid.uuid4())
         filename = f"{request.user.id}_profilepicture{ext}"
         ruta_publica = os.path.join("public", filename)
-        path = default_storage.save(ruta_publica, ContentFile(archivo.read()))
+        default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
         imagen = Imagen.objects.create(uuid=img_uuid, extension=ext)
 
         return Response({
             "uuid": imagen.uuid,
-            "nombre_archivo": filename,
-            "url": f"/media/public/{filename}"
+            "fileName": filename,
+            "url": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_201_CREATED)
 
 # ============================================================================
