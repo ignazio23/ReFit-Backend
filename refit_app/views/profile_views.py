@@ -165,10 +165,10 @@ class DeleteAccountView(APIView):
     def post(self, request):
         user = request.user
 
-        if user.bloqueated:
+        if user.blocked:
             return Response({"detail": "Ya has solicitado eliminar tu cuenta."}, status=HTTP_400_BAD_REQUEST)
 
-        user.bloqueated = True
+        user.blocked = True
         user.lock_date = timezone.now()
         user.save()
 

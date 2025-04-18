@@ -84,9 +84,9 @@ class LoginView(APIView):
             if not user.is_active:
                 return Response({"detail": "Cuenta desactivada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
 
-            if user.bloqueated:
+            if user.blocked:
                 if user.lock_date and timezone.now() - user.lock_date < timedelta(days=30):
-                    user.bloqueated = False
+                    user.blocked = False
                     user.lock_date = None
                     logger.info("Usuario %s reactivado durante el período de gracia.", user.email)
                 else:

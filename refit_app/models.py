@@ -78,7 +78,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_login = models.BooleanField(default=True)  # Campo agregado para marcar el primer inicio de sesión
     last_login = models.DateTimeField(null=True, blank=True)
 
-    bloqueated = models.BooleanField(default=False)
+    blocked = models.BooleanField(default=False)
     lock_date = models.DateTimeField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
