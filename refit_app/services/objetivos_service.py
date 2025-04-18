@@ -12,12 +12,23 @@ def puede_completar_objetivo(usuario_objetivo):
     """
     Verifica si el usuario tiene los pasos necesarios hoy para completar el objetivo.
     """
+    objetivo = usuario_objetivo.fk_objetivos_diarios
     pasos_hoy = Pasos.objects.filter(
         fk_usuarios=usuario_objetivo.fk_usuarios,
         fecha=date.today()
     ).first()
 
-    if not pasos_hoy:
-        return False
+    if objetivo.requisito == "pasos":
+        if not pasos_hoy:
+            return False
+        return pasos_hoy.pasos >= 10000  # o configurable
 
-    return pasos_hoy.pasos >= usuario_objetivo.fk_objetivos_diarios.requisito
+    elif objetivo.requisito == "login":
+        return usuario_objetivo.fk_usuarios.last_login.date() == date.today()
+
+    elif objetivo.requisito == "subirFoto":
+        return usuario_objetivo.fk_usuarios.image is not None
+
+    # Otros tipos de objetivos podrían evaluarse aquí...
+
+    return False

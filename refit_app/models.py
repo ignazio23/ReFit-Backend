@@ -260,7 +260,7 @@ class ObjetivoDiario(models.Model):
     descripcion = models.TextField(null=True, blank=True, verbose_name="Descripción")
     premio = models.IntegerField()
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    
+    requisito = models.CharField(max_length=255, verbose_name="Requisito del objetivo", default="Leer descripción")
 
     class Meta:
         db_table = '"OBJETIVOS_DIARIOS"'
