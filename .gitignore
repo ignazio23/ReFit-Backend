@@ -66,12 +66,12 @@ Desktop.ini
 Docker/
 Dockerfile
 docker-compose.yml
-*/local.py
+local.py
 # ========================
 # TESTING
 # ========================
-*/testing.py
+testing.py
 # ========================
 # PROD
 # ========================
-*/production.py
+production.py
