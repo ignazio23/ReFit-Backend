@@ -75,13 +75,13 @@ urlpatterns = [
         path("list/", ObjetivoDiarioListView.as_view(), name="list-objetives"),
         path("actives/", ObjetivosActivosUsuarioView.as_view(), name="objetives-user"),
         path("check/", CheckDailyTaskView.as_view(), name="check-objetive"),
-        path("exchange/", ExchangeDailyTaskView.as_view(), name="exchange-objetive"),
+        path("redeem/", ExchangeDailyTaskView.as_view(), name="redeem-objetive"),
     ])),
 
     # Productos y sistema de canje
     path("products/", include([
         path("view/", ProductView.as_view(), name="product-list"),
-        path("redeem/", ExchangeProductView.as_view(), name="exchange-product"),
+        path("redeem/", ExchangeProductView.as_view(), name="redeem-product"),
         path("new_categorie/", CategoriaCreateView.as_view(), name="new_categorie"),
         path("categories/", CategoriaListView.as_view(), name="list_categories"),
         path("categories/edit/<int:id_categoria>/", CategoriaEditView.as_view(), name="edit_categorie"),
