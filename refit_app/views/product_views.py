@@ -55,7 +55,10 @@ class ProductoCreateView(APIView):
 
             return Response(serializer.data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-    
+
+# --------------------------------------------------------------------------
+# Registro de Categoria
+# --------------------------------------------------------------------------   
 class CategoriaCreateView(APIView):
     """
     Permite a un administrador registrar una nueva categoría.
@@ -90,7 +93,10 @@ class ProductView(APIView):
         productos = Producto.objects.filter(disponible=True).order_by('-fecha_creacion')
         serializer = ProductSerializer(productos, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
-    
+
+# --------------------------------------------------------------------------
+# Listado de categorias disponibles
+# --------------------------------------------------------------------------    
 class CategoriaListView(APIView):
     """
     Devuelve todas las categorías disponibles en la tienda.
@@ -139,7 +145,10 @@ class ProductoEditView(APIView):
             serializer.save()
             return Response(serializer.data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-    
+
+# --------------------------------------------------------------------------
+# Asignación de imagen a producto (Admin)
+# --------------------------------------------------------------------------  
 class EditProductImageView(APIView):
     """
     Permite a un administrador asociar una imagen a un producto.
@@ -181,7 +190,10 @@ class EditProductImageView(APIView):
             "detail": "Imagen del producto actualizada correctamente.",
             "image_url": f"/media/{imagen.uuid}{imagen.extension}"
         }, status=HTTP_200_OK)
-    
+
+# --------------------------------------------------------------------------
+# Edición de categoria existente (Admin)
+# --------------------------------------------------------------------------   
 class CategoriaEditView(APIView):
     """
     Permite a un administrador editar una categoría existente.
@@ -227,7 +239,7 @@ class ExchangeProductView(APIView):
         Permite al usuario canjear un producto a cambio de monedas.
         Se requiere un ID de producto válido.
         """
-        product_id = request.data.get("product_id")
+        product_id = request.data.get("productId")
         if not product_id:
             return Response({"error": "Falta el ID del producto."}, status=HTTP_400_BAD_REQUEST)
 
