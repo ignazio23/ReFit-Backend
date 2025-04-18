@@ -116,7 +116,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'name', 'email', 'coins', 'dailySteps', 'dailyGoal', 'monthlySteps', 
-                  'leaderBoardPosition', 'firstLogin', 'profilePicture', 'last_login', 'updatePassword')
+                  'leaderBoardPosition', 'firstLogin', 'profilePicture', 'lastlogin', 'updatePassword')
     
     def get_uuid(self, obj):
         if obj.image and obj.image.uuid:
