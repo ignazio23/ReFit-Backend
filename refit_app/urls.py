@@ -44,7 +44,7 @@ urlpatterns = [
         path("register/", RegisterView.as_view(), name="register"),
         path("login/", LoginView.as_view(), name="login"),
         path("logout/", LogOutView.as_view(), name="logout"),
-        path("change-password/", ChangePasswordView.as_view(), name="change-password"),
+        path("update-password/", ChangePasswordView.as_view(), name="change-password"),
         path("recover-password/", PasswordRecoveryView.as_view(), name="recover-password"),
         path("auth/reset-password/", ResetPasswordView.as_view(), name="reset-password"),
         # Endpoint de TOKENS JWT
