@@ -15,8 +15,6 @@ from refit_app.models import User, PasswordRecovery
 from refit_app.serializers import (
     UserRegisterSerializer,
     LoginResponseSerializer,
-    ForgotPasswordSerializer,
-    RecoverPasswordSerializer,
     ChangePasswordSerializer,
     RegisterResponseSerializer
 )
@@ -55,8 +53,7 @@ class RegisterView(APIView):
             user = serializer.save()
             logger.info("Usuario registrado exitosamente: %s", user.email)
 
-            response_data = RegisterResponseSerializer(user).data
-            return Response(response_data, status=HTTP_201_CREATED)
+            return Response({"message": "Usuario registrado exitosamente."}, status=HTTP_200_OK)
         
         logger.error("Error al registrar usuario: %s", serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
@@ -82,11 +79,7 @@ class LoginView(APIView):
         user = authenticate(email=email, password=password)
 
         if user:
-            if user.first_login:
-                user.first_login = False
-                
-            user.last_login  = timezone.now()
-            user.save()
+            es_primer_login = user.first_login  # Captura el estado actual
 
             # Genera tokens de acceso y actualización
             tokens = RefreshToken.for_user(user)
@@ -95,6 +88,13 @@ class LoginView(APIView):
             # Añade los tokens a la respuesta
             data["accessToken"] = str(tokens.access_token)
             data["refreshToken"] = str(tokens)
+
+            # Luego de generar la respuesta, actualizamos
+            if es_primer_login:
+                user.first_login = False
+
+            user.last_login = timezone.now()
+            user.save()
 
             logger.info("Usuario autenticado: %s", user.email)
             return Response(data, status=HTTP_200_OK)
@@ -138,14 +138,14 @@ class ChangePasswordView(APIView):
         """
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
-            old_password = serializer.validated_data['old_password']
-            new_password = serializer.validated_data['new_password']
+            oldPassword  = serializer.validated_data['oldPassword ']
+            newPassword = serializer.validated_data['newPassword']
 
-            if not request.user.check_password(old_password):
+            if not request.user.check_password(oldPassword ):
                 logger.warning("Intento fallido de cambio de contraseña para: %s", request.user.email)
                 return Response({"detail": "Contraseña actual incorrecta"}, status=HTTP_400_BAD_REQUEST)
 
-            request.user.set_password(new_password)
+            request.user.set_password(newPassword)
             request.user.update_password = False
             request.user.save()
             logger.info("Contraseña actualizada para el usuario: %s", request.user.email)
@@ -160,7 +160,7 @@ class PasswordRecoveryView(APIView):
     """
     View para la recuperación de contraseña:
     - Si recibe solo email: genera nueva contraseña y la envía
-    - Si recibe email + new_password: actualiza la contraseña
+    - Si recibe email + newPassword: actualiza la contraseña
     """
     permission_classes = [AllowAny]
 
@@ -175,15 +175,15 @@ class PasswordRecoveryView(APIView):
         except User.DoesNotExist:
             return Response({"error": "Usuario no encontrado."}, status=404)
 
-        nueva_password = User.objects.make_random_password()
-        user.set_password(nueva_password)
+        newPassword = User.objects.make_random_password()
+        user.set_password(newPassword)
         user.update_password = True
         user.save()
 
         # Enviar email (activar backend real en producción)
         send_mail(
             subject="Recuperación de contraseña - ReFit",
-            message=f"Tu nueva contraseña temporal es: {nueva_password}",
+            message=f"Tu nueva contraseña temporal es: {newPassword}",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
         )

@@ -68,25 +68,26 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 # ------------------------------------------------------------------------------
-# Registro: Serializador de respuesta
+# Registro: Serializador de respuesta - COMENTADO DEBIDO A QUE NO SE ESTA UTILIZANDO MÁS
 # ------------------------------------------------------------------------------
 # Serializador simple para retornar tras el registro de usuario.
 # Incluye campos básicos como id, email, nombre y apellidos.
 # Este serializador se utiliza para mostrar la información del usuario
 # después de un registro exitoso.
+"""
 class RegisterResponseSerializer(serializers.ModelSerializer):
     def get_profilePicture(self, obj):
         if obj.image and obj.image.uuid:
             return obj.image.uuid
         return None
     profilePicture = serializers.SerializerMethodField()
-    """
+    ""
     Serializador simple para retornar tras el registro de usuario.
-    """
+    ""
     class Meta:
         model = User
         fields = ('id', 'email', 'nombre', 'apellidos', 'fecha_nacimiento', 'genero', 'codigo_referido', 'profilePicture')
-
+"""
 # ------------------------------------------------------------------------------
 # Login: Serializador de respuesta
 # ------------------------------------------------------------------------------
@@ -147,8 +148,8 @@ class LoginResponseSerializer(serializers.ModelSerializer):
             return None
 
     def get_profilePicture(self, obj):
-        if obj.image and obj.image.uuid:
-            return obj.image.uuid  # UUID limpio, sin extensión ni ruta
+        if obj.image and obj.image.uuid and obj.image.extension:
+            return f"http://3.17.152.152/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
         return None
 # ------------------------------------------------------------------------------
 # Perfil del Usuario (para ediciones y detalles)
@@ -208,36 +209,6 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
         return None
 
 # ------------------------------------------------------------------------------
-# Recuperación de Contraseña
-# ------------------------------------------------------------------------------
-# Serializadores simples utilizados para el flujo de recuperación de contraseña.
-# 'token' se refiere al Token de sesión de DRF.
-class ForgotPasswordSerializer(serializers.Serializer):
-    """
-    Serializador para la función de olvidar contraseña.
-    """
-    email = serializers.EmailField()
-
-class RecoverPasswordSerializer(serializers.Serializer):
-    """
-    Serializador para la función de recuperar contraseña.
-    """
-    token = serializers.CharField()
-    new_password = serializers.CharField(write_only=True)
-
-    def validate_new_password(self, value):
-        """
-        Validaciones varias de la contraseña nueva.
-        """
-        if len(value) < 8:
-            raise serializers.ValidationError("La nueva contraseña debe tener al menos 8 caracteres.")
-        if not any(c.isdigit() for c in value):
-            raise serializers.ValidationError("Debe contener al menos un número.")
-        if not any(c.isupper() for c in value):
-            raise serializers.ValidationError("Debe contener al menos una letra mayúscula.")
-        return value
-    
-# ------------------------------------------------------------------------------
 # Edición de Perfil
 # ------------------------------------------------------------------------------
 class EditProfilePictureSerializer(serializers.ModelSerializer):
@@ -254,11 +225,13 @@ class EditDailyObjetiveSerializer(serializers.ModelSerializer):
     """
     Serializador para editar el objetivo diario del usuario.
     """
+    dailyGoal = serializers.IntegerField(source='objetivo_diario')
+    
     class Meta:
         model = User
-        fields = ('objetivo_diario',)
+        fields = ('dailyGoal')
     
-    def validate_objetivo_diario(self, value):
+    def validate_dailyGoal(self, value):
         """
         Validaciones para el objetivo diario.
         """
@@ -294,8 +267,8 @@ class ChangePasswordSerializer(serializers.Serializer):
     """
     Serializador para cambiar la contraseña del usuario.
     """
-    old_password = serializers.CharField(write_only=True)
-    new_password = serializers.CharField(write_only=True)
+    oldPassword = serializers.CharField(write_only=True)
+    newPassword = serializers.CharField(write_only=True)
 
     def validate_new_password(self, value):
         """
@@ -309,7 +282,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         """
         Validaciones combinadas para la contraseña.
         """
-        if data['old_password'] == data['new_password']:
+        if data['oldPassword'] == data['newPassword']:
             raise serializers.ValidationError("La nueva contraseña debe ser distinta de la anterior.")
         return data
 

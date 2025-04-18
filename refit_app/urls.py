@@ -41,11 +41,11 @@ from refit_app.views.status_views import RefreshTimestampView
 urlpatterns = [
     # Autenticación y credenciales
     path("auth/", include([
-        path("login/", LoginView.as_view(), name="login"),
         path("register/", RegisterView.as_view(), name="register"),
+        path("login/", LoginView.as_view(), name="login"),
         path("logout/", LogOutView.as_view(), name="logout"),
-        path("changepassword/", ChangePasswordView.as_view(), name="change-password"),
-        path("recoverpassword/", PasswordRecoveryView.as_view(), name="forgot-password"),
+        path("change-password/", ChangePasswordView.as_view(), name="change-password"),
+        path("recover-password/", PasswordRecoveryView.as_view(), name="recover-password"),
         # Endpoint de TOKENS JWT
         path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
         path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
@@ -54,11 +54,11 @@ urlpatterns = [
     ])),
 
     # Perfil de usuario
-    path("user/", include([
+    path("users/", include([
         path("profile/", UserDetailView.as_view(), name="user-profile"),
-        path("edit/", EditPersonalDataView.as_view(), name="edit-user"),
-        path("edit/image/", EditProfilePictureView.as_view(), name="perfil-imagen"),
-        path("edit/daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),
+        path("edit-profile/", EditPersonalDataView.as_view(), name="edit-user"),
+        path("profile-picture/", EditProfilePictureView.as_view(), name="perfil-imagen"),
+        path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),
         path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),
         path("referred/", ReferredUsersView.as_view(), name="user-referred"),
     ])),
