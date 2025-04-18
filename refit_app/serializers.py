@@ -122,15 +122,16 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     firstLogin = serializers.BooleanField(source='first_login')
     lastLogin  = serializers.DateTimeField(source='last_login', format="%Y-%m-%d %H:%M:%S", read_only=True)
     updatePassword = serializers.BooleanField(source='update_password')
+    referred = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('id', 'name', 'email', 'coins', 'dailySteps', 'dailyGoal', 'monthlySteps', 
-                  'leaderBoardPosition', 'firstLogin', 'profilePicture', 'lastLogin', 'updatePassword')
+                  'leaderBoardPosition', 'firstLogin', 'profilePicture', 'lastLogin', 'updatePassword', 'referred')
     
-    def get_uuid(self, obj):
-        if obj.image and obj.image.uuid:
-            return obj.image.uuid
+    def get_profilePicture(self, obj):
+        if obj.image and obj.image.uuid and obj.image.extension:
+            return f"http://3.17.152.152/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
         return None
 
     def get_name(self, obj):
@@ -155,11 +156,10 @@ class LoginResponseSerializer(serializers.ModelSerializer):
             return list(usuarios).index(obj.pk) + 1
         except ValueError:
             return None
+    
+    def get_referred(self, obj):
+        return obj.fk_usuario_referente is not None
 
-    def get_profilePicture(self, obj):
-        if obj.image and obj.image.uuid and obj.image.extension:
-            return f"http://3.17.152.152/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
-        return None
 # ------------------------------------------------------------------------------
 # Perfil del Usuario (para ediciones y detalles)
 # ------------------------------------------------------------------------------
