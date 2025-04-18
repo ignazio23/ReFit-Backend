@@ -36,12 +36,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     )
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
-    codigo_referido = serializers.CharField(required=False, allow_blank=True)
+    name = serializers.CharField(source='nombre')
+    surnames = serializers.CharField(source='apellidos')
+    birthDate = serializers.DateField(source='fecha_nacimiento')
+    gender = serializers.CharField(source='genero')
+    referralCode = serializers.CharField(source='codigo_referido', allow_blank=True, required=False)
     
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'password2', 'nombre', 'apellidos',
-                  'fecha_nacimiento', 'genero', 'codigo_referido', 'objetivo_diario')
+        fields = ('id', 'email', 'password', 'password2', 'name', 'surnames',
+                  'birthDate', 'gender', 'referralCode')
 
     def validate_email(self, value):
         if User.objects.filter(email=value, is_active=True).exists():

@@ -58,7 +58,7 @@ urlpatterns = [
     path("users/", include([
         path("profile/", UserDetailView.as_view(), name="user-profile"),
         path("edit-profile/", EditPersonalDataView.as_view(), name="edit-user"),
-        path("profile-picture/", EditProfilePictureView.as_view(), name="perfil-imagen"),
+        path("profile-picture/", EditProfilePictureView.as_view(), name="profile-picture"),
         path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),
         path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),
         path("referred/", ReferredUsersView.as_view(), name="user-referred"),
@@ -66,35 +66,35 @@ urlpatterns = [
     ])),
 
     # Conteo de pasos diarios
-    path("steps/", StepUpdateView.as_view(), name="pasos-diarios"),
+    path("steps/", StepUpdateView.as_view(), name="daily_steps"),
 
     # Objetivos y tareas diarias
     path("objectives/", include([
-        path("crear/", ObjetivoDiarioCreateView.as_view(), name="crear_objetivo_diario"),
-        path('<int:objetivo_id>/editar/', ObjetivoDiarioEditView.as_view()),
-        path("listar/", ObjetivoDiarioListView.as_view(), name="listar-objetivos"),
-        path("activos/", ObjetivosActivosUsuarioView.as_view(), name="objetivos-usuario"),
-        path("check/", CheckDailyTaskView.as_view(), name="check-objetivo"),
-        path("canjear/", ExchangeDailyTaskView.as_view(), name="canjear-objetivo"),
+        path("create/", ObjetivoDiarioCreateView.as_view(), name="create_daily_objetive"),
+        path('<int:objetivo_id>/edit/', ObjetivoDiarioEditView.as_view(), name="edit-objetive"),
+        path("list/", ObjetivoDiarioListView.as_view(), name="list-objetives"),
+        path("actives/", ObjetivosActivosUsuarioView.as_view(), name="objetives-user"),
+        path("check/", CheckDailyTaskView.as_view(), name="check-objetive"),
+        path("exchange/", ExchangeDailyTaskView.as_view(), name="exchange-objetive"),
     ])),
 
     # Productos y sistema de canje
     path("products/", include([
         path("view/", ProductView.as_view(), name="product-list"),
-        path("canjear/", ExchangeProductView.as_view(), name="exchange-product"),
-        path("nueva_categoria/", CategoriaCreateView.as_view(), name="nueva_categoria"),
-        path("categorias/", CategoriaListView.as_view(), name="listar_categorias"),
-        path("categorias/editar/<int:id_categoria>/", CategoriaEditView.as_view(), name="editar_categoria"),
-        path("nuevo/", ProductoCreateView.as_view(), name="nuevo_producto"),
-        path("editar/<int:id_producto>/", ProductoEditView.as_view(), name="editar_producto"),
-        path("producto/<int:producto_id>/imagen/", EditProductImageView.as_view(), name="producto-imagen"),
+        path("redeem/", ExchangeProductView.as_view(), name="exchange-product"),
+        path("new_categorie/", CategoriaCreateView.as_view(), name="new_categorie"),
+        path("categories/", CategoriaListView.as_view(), name="list_categories"),
+        path("categories/edit/<int:id_categoria>/", CategoriaEditView.as_view(), name="edit_categorie"),
+        path("new/", ProductoCreateView.as_view(), name="new_product"),
+        path("edit/<int:id_producto>/", ProductoEditView.as_view(), name="edit_product"),
+        path("product/<int:producto_id>/image/", EditProductImageView.as_view(), name="product-image"),
     ])),
 
     # Interacciones sociales y ranking
     path("social/", include([
         path("leaderboard/", LeaderboardView.as_view(), name="leaderboard"),
         path("friends/", FollowingFriendsView.as_view(), name="following-friends"),
-        path("ranking/", UsuarioRankingView.as_view(), name="usuario-ranking"),
+        path("ranking/", UsuarioRankingView.as_view(), name="user-ranking"),
     ])),
 
     # Parámetros y vistas avanzadas
@@ -103,8 +103,8 @@ urlpatterns = [
     ])),
 
     # Carga de imágenes (usuarios y productos)
-    path("upload/imagen/", UploadImageView.as_view(), name="upload-imagen"),
-    path("ver-imagen/<str:filename>/", ServeImageView.as_view(), name="ver-imagen"),
+    path("images/", UploadImageView.as_view(), name="upload-images"),
+    path("view-image/<str:filename>/", ServeImageView.as_view(), name="view-image"),
 
     # Historial de pasos y canjes
     path("history/", include([
