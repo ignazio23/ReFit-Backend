@@ -196,12 +196,12 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     coins = serializers.IntegerField(source='monedas_actuales')
-    total_steps = serializers.IntegerField(source='pasos_totales')
+    steps = serializers.IntegerField(source='pasos_totales')
     streak = serializers.IntegerField(source='racha')
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'image', 'coins', 'total_steps', 'streak')
+        fields = ('id', 'name', 'image', 'coins', 'steps', 'streak')
 
     def get_name(self, obj):
         """
@@ -210,11 +210,8 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
         return f"{obj.nombre} {obj.apellidos}"
 
     def get_image(self, obj):
-        """
-        Retorna las imagenes de perfil de usuarios para el leaderboard. 
-        """
         if obj.image:
-            return f"{settings.MEDIA_URL}{obj.image.uuid}.{obj.image.extension}"
+            return f"http://3.17.152.152/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
         return None
 
 # ------------------------------------------------------------------------------
@@ -255,9 +252,14 @@ class EditPersonalDataSerializer(serializers.ModelSerializer):
     """
     Serializador para editar los datos personales del usuario.
     """
+    name = serializers.CharField(source='nombre', required=False)
+    surnames = serializers.CharField(source='apellidos', required=False)
+    birthDate = serializers.DateField(source='fecha_nacimiento', required=False)
+    gender = serializers.CharField(source='genero', required=False)
+
     class Meta:
         model = User
-        fields = ('nombre', 'apellidos', 'email')
+        fields = ('name', 'surnames', 'birthDate', 'gender')
     
     def validate_email(self, value):
         """

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Descripción: Vistas API relacionadas con amigos, seguidores y ranking.
 # ============================================================================
 # --------------------------------------------------------------------------
-# Gestión de amigos
+# Lista de amigos para seguir
 # --------------------------------------------------------------------------
 class FollowingFriendsView(APIView):
     """
@@ -43,11 +43,11 @@ class FollowingFriendsView(APIView):
         Agrega o quita un usuario de la lista de amigos.
         """
         action = request.data.get("action")
-        seguir_id = request.data.get("seguir")
-        if not seguir_id:
+        follow_id  = request.data.get("followId")
+        if not follow_id :
             logger.error("User %s did not provide 'seguir' parameter.", request.user.email)
             return Response({"error": "Falta el ID del usuario a seguir."}, status=HTTP_400_BAD_REQUEST)
-        seguido = get_object_or_404(User, pk=seguir_id)
+        seguido = get_object_or_404(User, pk=follow_id )
 
         if action == "agregar":
             # Verificar si ya se está siguiendo
@@ -70,6 +70,9 @@ class FollowingFriendsView(APIView):
             logger.error("Invalid action provided by user %s: %s", request.user.email, action)
             return Response({"error": "Acción inválida."}, status=HTTP_400_BAD_REQUEST)
 
+# --------------------------------------------------------------------------
+# Lista de amigos
+# --------------------------------------------------------------------------
 class FriendsView(APIView):
     """
     Devuelve la lista de amigos que el usuario está siguiendo actualmente.
@@ -98,21 +101,12 @@ class LeaderboardView(APIView):
 
     def get(self, request):
         top_users = User.objects.filter(is_staff=False).order_by('-pasos_totales')[:5]
+        serialized = LeaderBoardSerializer(top_users, many=True).data
 
-        data = []
-        for idx, user in enumerate(top_users, start=1):
-            image_url = None
-            if user.image:
-                image_url = f"http://3.17.152.152/media/public/{user.image.uuid}.{user.image.extension.strip('.')}"
+        for idx, user in enumerate(serialized, start=1):
+            user["ranking"] = idx  # Se agrega fuera del serializer
 
-            data.append({
-                "ranking": idx,
-                "image": image_url,
-                "name": f"{user.nombre} {user.apellidos}",
-                "steps": user.pasos_totales
-            })
-
-        return Response(data, status=HTTP_200_OK)
+        return Response(serialized, status=HTTP_200_OK)
     
 # --------------------------------------------------------------------------
 # Ranking del usuario autenticado
