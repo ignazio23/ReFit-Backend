@@ -60,12 +60,30 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        """
-        Crea y retorna un nuevo usuario utilizando el UserManager.
-        """
-        #validated_data.pop('password')
+        referral_code = validated_data.pop("codigo_referido", "").strip()
+        referente = None
+
+        # Buscar usuario referente si se proporcionó un código válido
+        if referral_code:
+            referente = User.objects.filter(codigo_referido=referral_code).first()
+
+        # Generar código de referido único para el nuevo usuario
+        validated_data["codigo_referido"] = self.generar_codigo_unico()
+
+        # Asignar usuario referente si corresponde
+        validated_data["fk_usuario_referente"] = referente
+
+        # Normalizar email
         validated_data['email'] = validated_data['email'].lower().strip()
+
         return User.objects.create_user(**validated_data)
+
+    def generar_codigo_unico(self):
+        import string, random
+        while True:
+            nuevo_codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not User.objects.filter(codigo_referido=nuevo_codigo).exists():
+                return nuevo_codigo
 
 # ------------------------------------------------------------------------------
 # Registro: Serializador de respuesta - COMENTADO DEBIDO A QUE NO SE ESTA UTILIZANDO MÁS
