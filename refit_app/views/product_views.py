@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from django.shortcuts import get_object_or_404
 
-from refit_app.models import Producto, Categoria, ProductoCategoria, Canje, Imagen, ProductoImagen
+from refit_app.models import Producto, Categoria, ProductoCategoria, Canje, Imagen, ProductoImagen, CategoriaImagen
 from refit_app.serializers import ProductSerializer, CategoriaSerializer
 
 logger = logging.getLogger(__name__)
@@ -50,6 +50,17 @@ class ProductoCreateView(APIView):
         if serializer.is_valid():
             producto = serializer.save()
 
+            # Asociar imagen destacada y registrar en PRODUCTOS_IMAGENES
+            imagen_id = request.data.get("imagen_id")
+            if imagen_id:
+                try:
+                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                    producto.imagen_destacada = imagen
+                    producto.save()
+                    ProductoImagen.objects.get_or_create(fk_productos=producto, fk_imagenes=imagen)
+                except Imagen.DoesNotExist:
+                    pass
+
             # Crear la relación Producto-Categoría
             ProductoCategoria.objects.create(fk_productos=producto, fk_categorias=categoria)
 
@@ -72,8 +83,19 @@ class CategoriaCreateView(APIView):
         Se requiere un código único para la categoría.
         """
         serializer = CategoriaSerializer(data=request.data)
+
         if serializer.is_valid():
-            serializer.save()
+            categoria = serializer.save()
+
+            # Asociar imagen a la categoría y registrar en CATEGORIAS_IMAGENES
+            imagen_id = request.data.get("imagen_id")
+            if imagen_id:
+                try:
+                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                    CategoriaImagen.objects.get_or_create(fk_categorias=categoria, fk_imagenes=imagen)
+                except Imagen.DoesNotExist:
+                    pass
+
             return Response(serializer.data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
     
@@ -129,9 +151,22 @@ class ProductoEditView(APIView):
         """
         producto = get_object_or_404(Producto, pk=id_producto)
         serializer = ProductSerializer(producto, data=request.data)
+
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=HTTP_200_OK)
+            producto = serializer.save()
+
+            # Actualizar imagen si se envía imagen_id
+            imagen_id = request.data.get("imagen_id")
+            if imagen_id:
+                try:
+                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                    producto.imagen_destacada = imagen
+                    producto.save()
+                    ProductoImagen.objects.get_or_create(fk_productos=producto, fk_imagenes=imagen)
+                except Imagen.DoesNotExist:
+                    pass
+
+            return Response(serializer.data, status=HTTP_200_OK)        
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     def patch(self, request, id_producto):
@@ -141,8 +176,21 @@ class ProductoEditView(APIView):
         """
         producto = get_object_or_404(Producto, pk=id_producto)
         serializer = ProductSerializer(producto, data=request.data, partial=True)
+
         if serializer.is_valid():
-            serializer.save()
+            producto = serializer.save()
+
+            # Actualizar imagen si se envía imagen_id
+            imagen_id = request.data.get("imagen_id")
+            if imagen_id:
+                try:
+                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                    producto.imagen_destacada = imagen
+                    producto.save()
+                    ProductoImagen.objects.get_or_create(fk_productos=producto, fk_imagenes=imagen)
+                except Imagen.DoesNotExist:
+                    pass
+
             return Response(serializer.data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -208,8 +256,19 @@ class CategoriaEditView(APIView):
         """
         categoria = get_object_or_404(Categoria, pk=id_categoria)
         serializer = CategoriaSerializer(categoria, data=request.data)
+
         if serializer.is_valid():
-            serializer.save()
+            categoria = serializer.save()
+
+            # Actualizar imagen si se envía imagen_id
+            imagen_id = request.data.get("imagen_id")
+            if imagen_id:
+                try:
+                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                    CategoriaImagen.objects.get_or_create(fk_categorias=categoria, fk_imagenes=imagen)
+                except Imagen.DoesNotExist:
+                    pass
+
             return Response(serializer.data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -220,10 +279,22 @@ class CategoriaEditView(APIView):
         """
         categoria = get_object_or_404(Categoria, pk=id_categoria)
         serializer = CategoriaSerializer(categoria, data=request.data, partial=True)
+
         if serializer.is_valid():
-            serializer.save()
+            categoria = serializer.save()
+
+            # Actualizar imagen si se envía imagen_id
+            imagen_id = request.data.get("imagen_id")
+            if imagen_id:
+                try:
+                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                    CategoriaImagen.objects.get_or_create(fk_categorias=categoria, fk_imagenes=imagen)
+                except Imagen.DoesNotExist:
+                    pass
+
             return Response(serializer.data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    
 # --------------------------------------------------------------------------
 # Canjeo de producto por monedas
 # --------------------------------------------------------------------------

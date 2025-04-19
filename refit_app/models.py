@@ -187,14 +187,24 @@ class Categoria(models.Model):
 # --------------------------------------------------------------------------
 class CategoriaImagen(models.Model):
     """
-    Modelo intermedio para asociar una imagen a una categoría.
+    Modelo para almacenar la relación entre categorías e imágenes.
+    Permite asignar múltiples imágenes a una categoría.
     """
-    pk_categoria_imagen = models.AutoField(primary_key=True, verbose_name="ID imagen-categoría")
-    fk_categorias = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name="imagenes")
-    fk_imagenes = models.ForeignKey(Imagen, on_delete=models.CASCADE, related_name="categorias")
+    pk_categorias_imagenes = models.AutoField(primary_key=True, verbose_name="ID categoria-imagen")
+    fk_categorias = models.ForeignKey(
+        Categoria, on_delete=models.CASCADE, related_name="imagenes"
+    )
+    fk_imagenes = models.ForeignKey(
+        Imagen, on_delete=models.CASCADE, related_name="categoria_imagenes"
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = '"CATEGORIAS_IMAGENES"'
+
+    @property
+    def id(self):
+        return self.pk_categorias_imagenes
 
 # --------------------------------------------------------------------------
 # PRODUCTOS_CATEGORIAS

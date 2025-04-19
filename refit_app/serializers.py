@@ -349,12 +349,22 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
     def get_imageUrl(self, obj):
-        if obj.imagen and obj.imagen.uuid:
-            return f"/media/public/{obj.imagen.uuid}.{obj.imagen.extension.strip('.')}"
+        """
+        Retorna la URL de la primera imagen vinculada en la tabla PRODUCTOS_IMAGENES.
+        """
+        from refit_app.models import ProductoImagen
+
+        primera = ProductoImagen.objects.filter(fk_productos=obj).select_related('fk_imagenes').first()
+        if primera and primera.fk_imagenes:
+            imagen = primera.fk_imagenes
+            return f"/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
         return None
 
     def get_featuredImageUrl(self, obj):
-        if hasattr(obj, 'imagen_destacada') and obj.imagen_destacada:
+        """
+        Retorna la URL de la imagen destacada asociada directamente al producto.
+        """
+        if obj.imagen_destacada:
             return f"/media/public/{obj.imagen_destacada.uuid}.{obj.imagen_destacada.extension.strip('.')}"
         return None
     
@@ -381,11 +391,10 @@ class CategoriaSerializer(serializers.ModelSerializer):
         fields = ('id', 'code', 'name', 'imageUrl')
     
     def get_imageUrl(self, obj):
-        img_rel = obj.imagenes.first()  # Tomamos la primera imagen asociada
-        if img_rel and img_rel.fk_imagenes:
-            uuid = img_rel.fk_imagenes.uuid
-            ext = img_rel.fk_imagenes.extension.strip('.')
-            return f"http://3.17.152.152/media/public/{uuid}.{ext}"
+        imagen_rel = obj.imagenes.first()
+        if imagen_rel:
+            imagen = imagen_rel.fk_imagenes
+            return f"/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
         return None
 
 # ----------------------------------------------------------------------------
