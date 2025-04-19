@@ -181,6 +181,20 @@ class Categoria(models.Model):
         return self.pk_categorias
 
 # --------------------------------------------------------------------------
+# CATEGORIAS_IMAGENES
+# --------------------------------------------------------------------------
+class CategoriaImagen(models.Model):
+    """
+    Modelo intermedio para asociar una imagen a una categoría.
+    """
+    pk_categoria_imagen = models.AutoField(primary_key=True, verbose_name="ID imagen-categoría")
+    fk_categorias = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name="imagenes")
+    fk_imagenes = models.ForeignKey(Imagen, on_delete=models.CASCADE, related_name="categorias")
+
+    class Meta:
+        db_table = '"CATEGORIAS_IMAGENES"'
+
+# --------------------------------------------------------------------------
 # PRODUCTOS_CATEGORIAS
 # --------------------------------------------------------------------------
 class ProductoCategoria(models.Model):

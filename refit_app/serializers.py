@@ -314,15 +314,30 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización de productos.
     """
+    name = serializers.CharField(source='nombre')
+    description = serializers.CharField(source='descripcion')
+    price = serializers.IntegerField(source='precio')
+    featured = serializers.BooleanField(source='destacado')
     imageUrl = serializers.SerializerMethodField()
+    featuredImageUrl = serializers.SerializerMethodField()
 
     class Meta:
         model = Producto
-        fields = (
-            'id', 'nombre', 'descripcion', 'precio_monedas',
-            'disponible', 'destacado', 'fecha_creacion', 'imageUrl'
-        )
+        fields = [
+            'id', 'name', 'description', 'price',
+            'featured', 'imageUrl', 'featuredImageUrl'
+        ]
 
+    def get_imageUrl(self, obj):
+        if obj.imagen and obj.imagen.uuid:
+            return f"/media/public/{obj.imagen.uuid}.{obj.imagen.extension.strip('.')}"
+        return None
+
+    def get_featuredImageUrl(self, obj):
+        if hasattr(obj, 'imagen_destacada') and obj.imagen_destacada:
+            return f"/media/public/{obj.imagen_destacada.uuid}.{obj.imagen_destacada.extension.strip('.')}"
+        return None
+    
     def get_categoria(self, obj):
         """
         Devuelve la categoría del producto.
@@ -330,16 +345,8 @@ class ProductSerializer(serializers.ModelSerializer):
         cat = ProductoCategoria.objects.filter(fk_productos=obj).first()
         return cat.fk_categorias.nombre if cat else None
 
-    def get_imageUrl(self, obj):
-        """
-        Devuelve la URL de la imagen destacada del producto.
-        """
-        if obj.imagen and obj.imagen.uuid and obj.imagen.extension:
-            return f"http://3.17.152.152/media/public/{obj.imagen.uuid}.{obj.imagen.extension.strip('.')}"
-        return None
-
 # ------------------------------------------------------------------------------
-# Productos - Categorias
+# Categorias
 # ------------------------------------------------------------------------------
 class CategoriaSerializer(serializers.ModelSerializer):
     """
@@ -347,11 +354,23 @@ class CategoriaSerializer(serializers.ModelSerializer):
     """
     code = serializers.CharField(source='codigo')
     name = serializers.CharField(source='nombre')
+    imageUrl = serializers.SerializerMethodField()
 
     class Meta:
         model = Categoria
-        fields = ('id', 'code', 'name')
+        fields = ('id', 'code', 'name', 'imageUrl')
+    
+    def get_imageUrl(self, obj):
+        img_rel = obj.imagenes.first()  # Tomamos la primera imagen asociada
+        if img_rel and img_rel.fk_imagenes:
+            uuid = img_rel.fk_imagenes.uuid
+            ext = img_rel.fk_imagenes.extension.strip('.')
+            return f"http://3.17.152.152/media/public/{uuid}.{ext}"
+        return None
 
+# ----------------------------------------------------------------------------
+# Producto - Categorias
+# ----------------------------------------------------------------------------
 class ProductoCategoriaSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización de productos y sus categorías. 
