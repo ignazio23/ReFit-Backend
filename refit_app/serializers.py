@@ -226,7 +226,7 @@ class EditDailyObjetiveSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('dailyGoal',)
+        fields = ['dailyGoal']
     
     def validate_dailyGoal(self, value):
         """
