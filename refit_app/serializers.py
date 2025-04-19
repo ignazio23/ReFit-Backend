@@ -44,7 +44,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'name', 'surnames',
+        fields = ('id', 'email', 'password', 'name', 'surname',
                   'birthDate', 'gender', 'referralCode')
 
     def validate_email(self, value):
@@ -69,7 +69,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"password": "Las contraseñas no coinciden. Verifique e intente nuevamente."})
         return attrs
     """
-    
+
     def create(self, validated_data):
         """
         Crea y retorna un nuevo usuario utilizando el UserManager.
