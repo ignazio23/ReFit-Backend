@@ -35,16 +35,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(queryset=User.objects.all(), message="El email ingresado ya existe. Por favor, use otro email.")]
     )
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
+    #password2 = serializers.CharField(write_only=True, required=True)
     name = serializers.CharField(source='nombre')
-    surnames = serializers.CharField(source='apellidos')
+    surname = serializers.CharField(source='apellidos')
     birthDate = serializers.DateField(source='fecha_nacimiento')
     gender = serializers.CharField(source='genero')
     referralCode = serializers.CharField(source='codigo_referido', allow_blank=True, required=False)
     
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'password2', 'name', 'surnames',
+        fields = ('id', 'email', 'password', 'name', 'surnames',
                   'birthDate', 'gender', 'referralCode')
 
     def validate_email(self, value):
@@ -60,19 +60,21 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La contraseña debe tener al menos 8 caracteres.")
         return value
     
+    """    
     def validate(self, attrs):
-        """
+        
         Verifica que los campos 'password' y 'password2' coincidan.
-        """
+        
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Las contraseñas no coinciden. Verifique e intente nuevamente."})
         return attrs
-
+    """
+    
     def create(self, validated_data):
         """
         Crea y retorna un nuevo usuario utilizando el UserManager.
         """
-        validated_data.pop('password2')
+        validated_data.pop('password')
         validated_data['email'] = validated_data['email'].lower().strip()
         return User.objects.create_user(**validated_data)
 
@@ -235,7 +237,7 @@ class EditDailyObjetiveSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('dailyGoal')
+        fields = ('dailyGoal',)
     
     def validate_dailyGoal(self, value):
         """
