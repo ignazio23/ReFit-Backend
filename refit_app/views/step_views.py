@@ -37,9 +37,9 @@ class StepUpdateView(APIView):
         pasos = step_obj.pasos if step_obj else 0
 
         return Response({
-            "pasos_hoy": pasos,
-            "pasos_totales": request.user.pasos_totales,
-            "monedas": request.user.monedas_actuales
+            "stepsToday": pasos,
+            "totalSteps": request.user.pasos_totales,
+            "coins": request.user.monedas_actuales
         }, status=HTTP_200_OK)
 
     """
