@@ -8,6 +8,7 @@ from refit_app.models import (
 )
 from datetime import date
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 # ============================================================================
 # SERIALIZERS – ReFit App
@@ -585,15 +586,19 @@ class CheckDailyTaskSerializer(serializers.Serializer):
         Valida que la tarea exista y pertenezca al usuario.
         """
         user = self.context["request"].user
-        try:
-            tarea = UsuarioObjetivoDiario.objects.get(pk=value, fk_usuarios=user)
-        except UsuarioObjetivoDiario.DoesNotExist:
-            raise serializers.ValidationError("La tarea no existe o no pertenece al usuario.")
+        hoy = date.today()
 
-        if tarea.fk_objetivos_diarios.tipo != "cuantitativo":
-            raise serializers.ValidationError("Este objetivo no puede completarse desde este endpoint.")
+        objetivo = get_object_or_404(ObjetivoDiario, pk_objetivos_diarios=value, is_active=True)
 
-        self.tarea = tarea
+        self.tarea, created = UsuarioObjetivoDiario.objects.get_or_create(
+            fk_usuarios=user,
+            fk_objetivos_diarios=objetivo,
+            fecha_creacion=hoy
+        )
+
+        if self.tarea.fecha_completado:
+            raise serializers.ValidationError("La tarea ya fue completada.")
+
         return value
 
     def get_nombre_objetivo(self, obj):
@@ -635,21 +640,23 @@ class ExchangeDailyTaskSerializer(serializers.Serializer):
         Valida que la tarea exista, pertenezca al usuario y no haya sido canjeada.
         """
         user = self.context["request"].user
-        try:
-            tarea = UsuarioObjetivoDiario.objects.get(pk=value, fk_usuarios=user)
-        except UsuarioObjetivoDiario.DoesNotExist:
-            raise serializers.ValidationError("La tarea no existe o no pertenece al usuario.")
+        hoy = date.today()
 
-        if tarea.fk_objetivos_diarios.tipo != "cuantitativo":
-            raise serializers.ValidationError("Este objetivo no puede canjearse desde este endpoint.")
+        objetivo = get_object_or_404(ObjetivoDiario, pk_objetivos_diarios=value, is_active=True)
 
-        if not tarea.fecha_completado:
+        self.tarea = UsuarioObjetivoDiario.objects.filter(
+            fk_usuarios=user,
+            fk_objetivos_diarios=objetivo,
+            fecha_creacion=hoy
+        ).first()
+
+        if not self.tarea:
+            raise serializers.ValidationError("La tarea aún no ha sido registrada como completada.")
+        if not self.tarea.fecha_completado:
             raise serializers.ValidationError("La tarea aún no ha sido completada.")
-
-        if tarea.fecha_canjeado:
+        if self.tarea.fecha_canjeado:
             raise serializers.ValidationError("La tarea ya fue canjeada.")
 
-        self.tarea = tarea
         return value
 
     def get_nombre_objetivo(self, obj):

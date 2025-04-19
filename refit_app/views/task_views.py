@@ -135,31 +135,10 @@ class ObjetivosActivosUsuarioView(APIView):
 
     def get(self, request):
         """
-        Lista los objetivos diarios activos para el usuario autenticado.
-        Si no tiene objetivos activos para el día actual, se crean automáticamente.
+        Devuelve la lista de objetivos diarios activos para todos los usuarios.
         """
-        hoy = date.today()
-
-        # Activar automáticamente si no tiene tareas activas hoy
-        existentes = UsuarioObjetivoDiario.objects.filter(fk_usuarios=request.user, fecha_creacion=hoy)
-
-        if not existentes.exists():
-            generales = ObjetivoDiario.objects.all()
-
-            nuevos = [
-                UsuarioObjetivoDiario(
-                    fk_usuarios=request.user,
-                    fk_objetivos_diarios=obj
-                ) for obj in generales
-            ]
-
-            UsuarioObjetivoDiario.objects.bulk_create(nuevos)
-            
-            logger.info("Objetivos diarios activados para %s.", request.user.email)
-
-        tareas = UsuarioObjetivoDiario.objects.filter(fk_usuarios=request.user, fecha_creacion=hoy)
-        serializer = UsuarioObjetivoDiarioSerializer(tareas, many=True)
-
+        objetivos = ObjetivoDiario.objects.filter(is_active=True).order_by('pk_objetivos_diarios')
+        serializer = ObjetivoDiarioSerializer(objetivos, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
     
 # --------------------------------------------------------------------------

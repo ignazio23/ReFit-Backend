@@ -279,6 +279,7 @@ class ObjetivoDiario(models.Model):
     valor_requerido = models.IntegerField(default=10000, verbose_name="Cantidad requerida (solo para cuantitativos)")
     premio = models.IntegerField()
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True, verbose_name="Objetivo activo")
     
     class Meta:
         db_table = '"OBJETIVOS_DIARIOS"'
