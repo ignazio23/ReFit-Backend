@@ -334,7 +334,7 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     name = serializers.CharField(source='nombre')
     description = serializers.CharField(source='descripcion')
-    price = serializers.IntegerField(source='precio')
+    price = serializers.IntegerField(source='precio_monedas')
     featured = serializers.BooleanField(source='destacado')
     imageUrl = serializers.SerializerMethodField()
     featuredImageUrl = serializers.SerializerMethodField()
