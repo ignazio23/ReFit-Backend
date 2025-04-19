@@ -31,15 +31,18 @@ logger = logging.getLogger(__name__)
 def calcular_multiplicador(user):
     """
     Calcula el multiplicador basado en la racha del usuario.
-    Si han pasado 24 horas desde la última actualización de la racha
-    sin que se haya incrementado, se reinicia la racha a 0.
+    - Solo se aplica si el usuario ha completado TODOS los objetivos del día actual.
+    - Si han pasado más de 24h desde la última racha (racha_updated_at), se reinicia.
     """
+    ahora = timezone.now()
+
     if user.racha_updated_at:
-        if timezone.now() - user.racha_updated_at >= timedelta(hours=24):
+        tiempo_desde_ultima_racha = ahora - user.racha_updated_at
+        if tiempo_desde_ultima_racha > timedelta(hours=24):
+            # 🔁 Reinicia si no se completaron todos los objetivos en ese intervalo
             user.racha = 0
             user.racha_updated_at = None
             user.save()
-
             return 1.0  # Valor base
         
     return min(2.0, 1.0 + 0.1 * user.racha)
@@ -219,38 +222,23 @@ class ExchangeDailyTaskView(APIView):
         """
         serializer = ExchangeDailyTaskSerializer(data=request.data, context={'request': request})
 
-        if not serializer.is_valid():
-            logger.error("Error al canjear tarea diaria: %s", serializer.errors)
-            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        if serializer.is_valid():
+            tarea = serializer.tarea
 
-        tarea = serializer.tarea
-        objetivo = tarea.fk_objetivos_diarios
+            # Validación ya fue hecha en el serializer (completado y no canjeado)
+            tarea.fecha_canjeado = timezone.now()
+            tarea.save()
 
-        if tarea.fecha_canjeado:
-            return Response({"error": "La tarea ya fue canjeada."}, status=HTTP_400_BAD_REQUEST)
+            premio_base = tarea.fk_objetivos_diarios.premio
+            request.user.monedas_actuales += premio_base
+            request.user.save()
 
-        if not tarea.fecha_completado:
-            return Response({"error": "La tarea aún no ha sido completada."}, status=HTTP_400_BAD_REQUEST)
+            logger.info("Tarea %s canjeada por %s. Premio: %s", tarea.pk, request.user.email, premio_base)
 
-        if objetivo.tipo != "cuantitativo":
-            return Response({"error": "Este tipo de objetivo no puede canjearse por esta vía."}, status=HTTP_400_BAD_REQUEST)
+            return Response({
+                "message": "Recompensa canjeada exitosamente.",
+                "prize": premio_base
+            }, status=HTTP_200_OK)
 
-        # Canje exitoso
-        tarea.fecha_canjeado = timezone.now()
-        tarea.save()
-
-        multiplicador = calcular_multiplicador(request.user)
-        premio_base = objetivo.premio
-        premio_final = int(premio_base * multiplicador)
-
-        request.user.monedas_actuales += premio_final
-        request.user.save()
-
-        logger.info("Tarea %s canjeada por %s. Multiplicador: %.1f", tarea.pk, request.user.email, multiplicador)
-
-        return Response({
-            "message": "Recompensa canjeada exitosamente.",
-            "prize": premio_base,
-            "multiplier": multiplicador,
-            "final_prize": premio_final
-        }, status=HTTP_200_OK)
+        logger.error("Error al canjear tarea: %s", serializer.errors)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
