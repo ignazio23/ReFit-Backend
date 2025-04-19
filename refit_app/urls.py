@@ -80,15 +80,19 @@ urlpatterns = [
 
     # Productos y sistema de canje
     path("products/", include([
-        path("view/", ProductView.as_view(), name="product-list"),
+        path("list/", ProductView.as_view(), name="product-list"),
         path("redeem/", ExchangeProductView.as_view(), name="redeem-product"),
-        path("new_categorie/", CategoriaCreateView.as_view(), name="new_categorie"),
-        path("categories/", CategoriaListView.as_view(), name="list_categories"),
-        path("categories/edit/<int:id_categoria>/", CategoriaEditView.as_view(), name="edit_categorie"),
         path("new/", ProductoCreateView.as_view(), name="new_product"),
         path("edit/<int:id_producto>/", ProductoEditView.as_view(), name="edit_product"),
         path("product/<int:producto_id>/image/", EditProductImageView.as_view(), name="product-image"),
     ])),
+
+    # Categorías
+    path("categories/", include([
+        path("new/", CategoriaCreateView.as_view(), name="new_categorie"),
+        path("list/", CategoriaListView.as_view(), name="list_categories"),
+        path("edit/<int:id_categoria>/", CategoriaEditView.as_view(), name="edit_categorie"),
+     ])),
 
     # Interacciones sociales y ranking
     path("social/", include([
