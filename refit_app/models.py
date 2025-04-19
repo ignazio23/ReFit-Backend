@@ -23,6 +23,8 @@ TIPO_TRANSACCIONES_CHOICES = ( ("Ingreso", "Ingreso"), ("Gasto", "Gasto"), )
 
 TIPO_ESTADOS_CHOICES = (('aprobado', 'Aprobado'), ('pendiente', 'Pendiente'), ('rechazado', 'Rechazado'))
 
+TIPO_OBJETIVO_CHOICES = [('cuantitativo', 'Cuantitativo'), ('cualitativo', 'Cualitativo')]
+
 # --------------------------------------------------------------------------
 # IMAGENES
 # --------------------------------------------------------------------------
@@ -272,10 +274,12 @@ class ObjetivoDiario(models.Model):
     pk_objetivos_diarios = models.AutoField(primary_key=True, verbose_name="ID objetivo diario")
     nombre = models.CharField(max_length=100, verbose_name="Nombre")
     descripcion = models.TextField(null=True, blank=True, verbose_name="Descripción")
+    tipo = models.CharField(max_length=20, choices=TIPO_OBJETIVO_CHOICES, default='cuantitativo')
+    requisito = models.CharField(max_length=255, verbose_name="Requisito del objetivo")
+    valor_requerido = models.IntegerField(default=10000, verbose_name="Cantidad requerida (solo para cuantitativos)")
     premio = models.IntegerField()
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    requisito = models.CharField(max_length=255, verbose_name="Requisito del objetivo", default="Leer descripción")
-
+    
     class Meta:
         db_table = '"OBJETIVOS_DIARIOS"'
     

@@ -39,7 +39,9 @@ def calcular_multiplicador(user):
             user.racha = 0
             user.racha_updated_at = None
             user.save()
+
             return 1.0  # Valor base
+        
     return min(2.0, 1.0 + 0.1 * user.racha)
 
 # --------------------------------------------------------------------------
@@ -60,13 +62,16 @@ class ObjetivoDiarioCreateView(APIView):
         serializer = ObjetivoDiarioSerializer(data=request.data)
         if serializer.is_valid():
             objetivo = serializer.save()
+
             logger.info("Objetivo diario creado por %s: %s", request.user.email, objetivo.nombre)
+
             return Response({
                 "message": "Objetivo diario creado con éxito.",
                 "objetivo": serializer.data
             }, status=HTTP_201_CREATED)
 
         logger.error("Error al crear objetivo diario: %s", serializer.errors)
+
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 # --------------------------------------------------------------------------
@@ -89,13 +94,16 @@ class ObjetivoDiarioEditView(APIView):
         serializer = ObjetivoDiarioSerializer(objetivo, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+
             logger.info("Objetivo diario %s editado por %s", objetivo_id, request.user.email)
+
             return Response({
                 "message": "Objetivo actualizado correctamente.",
                 "objetivo": serializer.data
             }, status=HTTP_200_OK)
 
         logger.error("Error al editar objetivo %s: %s", objetivo_id, serializer.errors)
+
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
     
 # --------------------------------------------------------------------------
@@ -134,19 +142,24 @@ class ObjetivosActivosUsuarioView(APIView):
 
         # Activar automáticamente si no tiene tareas activas hoy
         existentes = UsuarioObjetivoDiario.objects.filter(fk_usuarios=request.user, fecha_creacion=hoy)
+
         if not existentes.exists():
             generales = ObjetivoDiario.objects.all()
+
             nuevos = [
                 UsuarioObjetivoDiario(
                     fk_usuarios=request.user,
                     fk_objetivos_diarios=obj
                 ) for obj in generales
             ]
+
             UsuarioObjetivoDiario.objects.bulk_create(nuevos)
+            
             logger.info("Objetivos diarios activados para %s.", request.user.email)
 
         tareas = UsuarioObjetivoDiario.objects.filter(fk_usuarios=request.user, fecha_creacion=hoy)
         serializer = UsuarioObjetivoDiarioSerializer(tareas, many=True)
+
         return Response(serializer.data, status=HTTP_200_OK)
     
 # --------------------------------------------------------------------------
@@ -166,38 +179,48 @@ class CheckDailyTaskView(APIView):
         Si el usuario completa todas las tareas del día, se incrementa su racha.
         """
         serializer = CheckDailyTaskSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            tarea = serializer.tarea
 
-            # Verificar que se hayan cumplido los pasos requeridos
-            if not puede_completar_objetivo(tarea):
-                return Response({"error": "No se alcanzó el objetivo de pasos."}, status=HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            logger.error("Error al verificar tarea diaria: %s", serializer.errors)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-            tarea.fecha_completado = timezone.now()
-            tarea.save()
-            logger.info("Tarea %s marcada como completada para %s", tarea.pk, request.user.email)
+        tarea = serializer.tarea
+        objetivo = tarea.fk_objetivos_diarios
 
-            # Verificar si el usuario completó todas las tareas de hoy
-            hoy = date.today()
-            completadas = UsuarioObjetivoDiario.objects.filter(
-                fk_usuarios=request.user,
-                fecha_creacion=hoy,
-                fecha_completado__isnull=False
-            ).count()
-            total = UsuarioObjetivoDiario.objects.filter(
-                fk_usuarios=request.user,
-                fecha_creacion=hoy
-            ).count()
+        # Solo se permiten tareas de tipo cuantitativo desde esta lógica
+        if objetivo.tipo != "cuantitativo":
+            return Response({"error": "Este tipo de objetivo no puede completarse manualmente."}, status=HTTP_400_BAD_REQUEST)
 
-            if completadas == total:
-                request.user.racha += 1
-                request.user.racha_updated_at = timezone.now()
-                request.user.save()
-                logger.info("%s completó todos los objetivos. Racha actual: %s", request.user.email, request.user.racha)
+        if tarea.fecha_completado:
+            return Response({"message": "La tarea ya fue marcada como completada."}, status=HTTP_200_OK)
 
-            return Response({"message": "Tarea completada correctamente."}, status=HTTP_200_OK)
-        logger.error("Error al verificar tarea: %s", serializer.errors)
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        if not puede_completar_objetivo(tarea):
+            return Response({"error": "No se alcanzó el requisito del objetivo."}, status=HTTP_400_BAD_REQUEST)
+
+        # Marcar como completada
+        tarea.fecha_completado = timezone.now()
+        tarea.save()
+        logger.info("Tarea %s marcada como completada para %s", tarea.pk, request.user.email)
+
+        # Verificar si el usuario completó todas las tareas del día
+        hoy = date.today()
+        completadas = UsuarioObjetivoDiario.objects.filter(
+            fk_usuarios=request.user,
+            fecha_creacion=hoy,
+            fecha_completado__isnull=False
+        ).count()
+        total = UsuarioObjetivoDiario.objects.filter(
+            fk_usuarios=request.user,
+            fecha_creacion=hoy
+        ).count()
+
+        if completadas == total:
+            request.user.racha += 1
+            request.user.racha_updated_at = timezone.now()
+            request.user.save()
+            logger.info("%s completó todos los objetivos. Racha actual: %s", request.user.email, request.user.racha)
+
+        return Response({"message": "Tarea completada correctamente."}, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
 # Canjear recompensa y aplicar multiplicador según racha
@@ -217,34 +240,38 @@ class ExchangeDailyTaskView(APIView):
         """
         serializer = ExchangeDailyTaskSerializer(data=request.data, context={'request': request})
 
-        # Verificar si la tarea existe
+        if not serializer.is_valid():
+            logger.error("Error al canjear tarea diaria: %s", serializer.errors)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+        tarea = serializer.tarea
+        objetivo = tarea.fk_objetivos_diarios
+
         if tarea.fecha_canjeado:
             return Response({"error": "La tarea ya fue canjeada."}, status=HTTP_400_BAD_REQUEST)
 
-        # Verificar si la tarea fue completada
         if not tarea.fecha_completado:
             return Response({"error": "La tarea aún no ha sido completada."}, status=HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            tarea = serializer.tarea
-            tarea.fecha_canjeado = timezone.now()
-            tarea.save()
+        if objetivo.tipo != "cuantitativo":
+            return Response({"error": "Este tipo de objetivo no puede canjearse por esta vía."}, status=HTTP_400_BAD_REQUEST)
 
-            # Calcular el multiplicador con la función helper
-            multiplicador = calcular_multiplicador(request.user.racha)
-            premio_base = tarea.fk_objetivos_diarios.premio
-            premio_final = int(premio_base * multiplicador)
+        # Canje exitoso
+        tarea.fecha_canjeado = timezone.now()
+        tarea.save()
 
-            request.user.monedas_actuales += premio_final
-            request.user.save()
+        multiplicador = calcular_multiplicador(request.user)
+        premio_base = objetivo.premio
+        premio_final = int(premio_base * multiplicador)
 
-            logger.info("Tarea %s canjeada por %s. Multiplicador: %.1f", tarea.pk, request.user.email, multiplicador)
+        request.user.monedas_actuales += premio_final
+        request.user.save()
 
-            return Response({
-                "message": "Recompensa canjeada exitosamente.",
-                "premio": premio_base,
-                "multiplicador": multiplicador,
-                "total_recibido": premio_final
-            }, status=HTTP_200_OK)
-        logger.error("Error al canjear tarea: %s", serializer.errors)
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        logger.info("Tarea %s canjeada por %s. Multiplicador: %.1f", tarea.pk, request.user.email, multiplicador)
+
+        return Response({
+            "message": "Recompensa canjeada exitosamente.",
+            "prize": premio_base,
+            "multiplier": multiplicador,
+            "final_prize": premio_final
+        }, status=HTTP_200_OK)

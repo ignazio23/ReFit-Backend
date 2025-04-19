@@ -557,10 +557,11 @@ class ParametroSerializer(serializers.ModelSerializer):
         fields = ('id', 'codigo', 'valor', 'fecha_creacion')
 
 # ------------------------------------------------------------------------------
-# Tareas Diarias (placeholders opcionales)
+# Check de Tareas Diarias
 # ------------------------------------------------------------------------------
-# Placeholder para funcionalidades futuras relacionadas a tareas diarias.
-# Si estas lógicas no están implementadas, se recomienda remover temporalmente.
+# Serializador para verificar el estado de una tarea diaria.
+# Se utiliza para comprobar si una tarea ha sido completada o no.
+# Incluye validaciones para asegurarse de que la tarea existe y pertenece al usuario.
 class CheckDailyTaskSerializer(serializers.Serializer):
     """
     Serializador para verificar el estado de una tarea diaria. 
@@ -570,19 +571,23 @@ class CheckDailyTaskSerializer(serializers.Serializer):
     premio = serializers.SerializerMethodField()
     fecha_completado = serializers.SerializerMethodField()
 
+    # ------------------------------------------------------------------------------
+    # Validaciones alineadas con Objetivos de Tipo Cuantitativo
+    # ------------------------------------------------------------------------------
     def validate_tarea_id(self, value):
         """
         Valida que la tarea exista y pertenezca al usuario.
         """
         user = self.context["request"].user
         try:
-            self.tarea = UsuarioObjetivoDiario.objects.get(pk=value, fk_usuarios=user)
+            tarea = UsuarioObjetivoDiario.objects.get(pk=value, fk_usuarios=user)
         except UsuarioObjetivoDiario.DoesNotExist:
             raise serializers.ValidationError("La tarea no existe o no pertenece al usuario.")
 
-        if self.tarea.fecha_completado:
-            raise serializers.ValidationError("La tarea ya fue completada.")
+        if tarea.fk_objetivos_diarios.tipo != "cuantitativo":
+            raise serializers.ValidationError("Este objetivo no puede completarse desde este endpoint.")
 
+        self.tarea = tarea
         return value
 
     def get_nombre_objetivo(self, obj):
@@ -603,6 +608,10 @@ class CheckDailyTaskSerializer(serializers.Serializer):
         """
         return self.tarea.fecha_completado
 
+# ------------------------------------------------------------------------------
+# Canjeo de Tareas Diarias
+# ------------------------------------------------------------------------------
+# Serializador para canjear una tarea diaria.
 class ExchangeDailyTaskSerializer(serializers.Serializer):
     """
     Serializador para canjear una tarea diaria. 
@@ -612,22 +621,29 @@ class ExchangeDailyTaskSerializer(serializers.Serializer):
     premio = serializers.SerializerMethodField()
     fecha_canjeado = serializers.SerializerMethodField()
 
+    # ------------------------------------------------------------------------------
+    # Validaciones alineadas con Objetivos de Tipo Cuantitativo
+    # ------------------------------------------------------------------------------
     def validate_tarea_id(self, value):
         """
         Valida que la tarea exista, pertenezca al usuario y no haya sido canjeada.
         """
         user = self.context["request"].user
         try:
-            self.tarea = UsuarioObjetivoDiario.objects.get(pk=value, fk_usuarios=user)
+            tarea = UsuarioObjetivoDiario.objects.get(pk=value, fk_usuarios=user)
         except UsuarioObjetivoDiario.DoesNotExist:
             raise serializers.ValidationError("La tarea no existe o no pertenece al usuario.")
 
-        if not self.tarea.fecha_completado:
+        if tarea.fk_objetivos_diarios.tipo != "cuantitativo":
+            raise serializers.ValidationError("Este objetivo no puede canjearse desde este endpoint.")
+
+        if not tarea.fecha_completado:
             raise serializers.ValidationError("La tarea aún no ha sido completada.")
 
-        if self.tarea.fecha_canjeado:
+        if tarea.fecha_canjeado:
             raise serializers.ValidationError("La tarea ya fue canjeada.")
 
+        self.tarea = tarea
         return value
 
     def get_nombre_objetivo(self, obj):
@@ -647,6 +663,41 @@ class ExchangeDailyTaskSerializer(serializers.Serializer):
         Devuelve la fecha de canjeo de la tarea.
         """
         return self.tarea.fecha_canjeado
+# ------------------------------------------------------------------------------
+# # Objetivos Cualitativos
+# ------------------------------------------------------------------------------
+# Serializador para validar el cumplimiento de un objetivo cualitativo.
+# Se utiliza para marcar como completado un objetivo cualitativo
+# desde una acción externa (ej: login, subir foto).
+# class QualitativeObjectiveSerializer(serializers.Serializer):
+#     """
+#     Serializer para validar el cumplimiento de un objetivo cualitativo
+#     desde una acción externa (ej: login, subir foto).
+#     """
+#     requisito = serializers.CharField()
+
+#     def validate_requisito(self, value):
+#         user = self.context["request"].user
+
+#         # Buscar si existe un objetivo cualitativo activo para el usuario con ese requisito
+#         tarea = UsuarioObjetivoDiario.objects.filter(
+#             fk_usuarios=user,
+#             fecha_creacion=date.today(),
+#             fk_objetivos_diarios__tipo="cualitativo",
+#             fk_objetivos_diarios__requisito=value,
+#             fecha_completado__isnull=True
+#         ).first()
+
+#         if not tarea:
+#             raise serializers.ValidationError("No hay objetivo activo para este requisito.")
+
+#         self.tarea = tarea
+#         return value
+
+#     def completar(self):
+#         self.tarea.fecha_completado = timezone.now()
+#         self.tarea.save()
+#         return self.tarea
 
 # ------------------------------------------------------------------------------
 # Referidos
