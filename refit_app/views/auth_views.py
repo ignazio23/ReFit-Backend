@@ -11,13 +11,14 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 import uuid
-from datetime import timedelta
+from datetime import timedelta, date
 
 from refit_app.models import User, PasswordRecovery
 from refit_app.serializers import (
     UserRegisterSerializer,
     LoginResponseSerializer,
     ChangePasswordSerializer,
+    QualitativeObjectiveSerializer
 )
 
 from django.contrib.auth import get_user_model
@@ -105,6 +106,20 @@ class LoginView(APIView):
             data["accessToken"] = str(tokens.access_token)
             data["refreshToken"] = str(tokens)
 
+            # Intentar marcar objetivo cualitativo como completado
+            try:
+                serializer = QualitativeObjectiveSerializer(
+                    data={"requisito": "login"},
+                    context={"request": request}
+                )
+                if serializer.is_valid():
+                    for tarea in serializer.tareas_qualitativas:
+                        tarea.fecha_completado = date.today()
+                        tarea.save()
+                    logger.info("Objetivo cualitativo 'login' completado para %s", user.email)
+            except Exception as e:
+                logger.warning("No se pudo completar objetivo cualitativo: %s", e)
+
             # Luego de generar la respuesta, actualizamos
             if es_primer_login:
                 user.first_login = False
@@ -117,7 +132,6 @@ class LoginView(APIView):
         
         logger.warning("Credenciales inválidas para el email: %s", email)
         return Response({"detail": "Credenciales inválidas."}, status=HTTP_401_UNAUTHORIZED)
-
 
 # --------------------------------------------------------------------------
 # Cierre de Sesión

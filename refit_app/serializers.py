@@ -7,6 +7,7 @@ from refit_app.models import (
     Transaccion, ProductoCategoria, Canje, ProductoImagen, ObjetivoDiario
 )
 from datetime import date
+from django.utils import timezone
 
 # ============================================================================
 # SERIALIZERS – ReFit App
@@ -467,7 +468,12 @@ class ObjetivoDiarioSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = ObjetivoDiario
-        fields = ('id', 'nombre', 'descripcion', 'premio', 'fecha_creacion')
+        fields = (
+            'id', 'nombre', 'descripcion', 'tipo', 'requisito',
+            'valor_requerido','premio', 'fecha_creacion'
+        )
+
+        read_only_fields = ['id', 'fecha_creacion']
 
     def validate_premio(self, value):
         """
@@ -669,35 +675,35 @@ class ExchangeDailyTaskSerializer(serializers.Serializer):
 # Serializador para validar el cumplimiento de un objetivo cualitativo.
 # Se utiliza para marcar como completado un objetivo cualitativo
 # desde una acción externa (ej: login, subir foto).
-# class QualitativeObjectiveSerializer(serializers.Serializer):
-#     """
-#     Serializer para validar el cumplimiento de un objetivo cualitativo
-#     desde una acción externa (ej: login, subir foto).
-#     """
-#     requisito = serializers.CharField()
+class QualitativeObjectiveSerializer(serializers.Serializer):
+    """
+    Serializer para validar el cumplimiento de un objetivo cualitativo
+    desde una acción externa (ej: login, subir foto).
+    """
+    requisito = serializers.CharField()
 
-#     def validate_requisito(self, value):
-#         user = self.context["request"].user
+    def validate_requisito(self, value):
+        user = self.context["request"].user
 
-#         # Buscar si existe un objetivo cualitativo activo para el usuario con ese requisito
-#         tarea = UsuarioObjetivoDiario.objects.filter(
-#             fk_usuarios=user,
-#             fecha_creacion=date.today(),
-#             fk_objetivos_diarios__tipo="cualitativo",
-#             fk_objetivos_diarios__requisito=value,
-#             fecha_completado__isnull=True
-#         ).first()
+        # Buscar si existe un objetivo cualitativo activo para el usuario con ese requisito
+        tarea = UsuarioObjetivoDiario.objects.filter(
+            fk_usuarios=user,
+            fecha_creacion=date.today(),
+            fk_objetivos_diarios__tipo="cualitativo",
+            fk_objetivos_diarios__requisito=value,
+            fecha_completado__isnull=True
+        ).first()
 
-#         if not tarea:
-#             raise serializers.ValidationError("No hay objetivo activo para este requisito.")
+        if not tarea:
+            raise serializers.ValidationError("No hay objetivo activo para este requisito.")
 
-#         self.tarea = tarea
-#         return value
+        self.tarea = tarea
+        return value
 
-#     def completar(self):
-#         self.tarea.fecha_completado = timezone.now()
-#         self.tarea.save()
-#         return self.tarea
+    def completar(self):
+        self.tarea.fecha_completado = timezone.now()
+        self.tarea.save()
+        return self.tarea
 
 # ------------------------------------------------------------------------------
 # Referidos
