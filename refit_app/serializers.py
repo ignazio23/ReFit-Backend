@@ -67,7 +67,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         # Buscar usuario referente si se proporcionó un código válido
         if referral_code:
-            referente = User.objects.filter(codigo_referido=referral_code).first()
+            referente = User.objects.filter(codigo_referido=referral_code.upper()).first()
 
         # Generar código de referido único para el nuevo usuario
         validated_data["codigo_referido"] = self.generar_codigo_unico()
