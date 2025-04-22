@@ -42,13 +42,11 @@ class StepUpdateView(APIView):
             "coins": request.user.monedas_actuales
         }, status=HTTP_200_OK)
 
-    """
-    Suma pasos del día para el usuario autenticado, aplicando multiplicador si corresponde.
-    Reemplaza las views previas: StepCountView y AddStepsView.
-    """
-    permission_classes = [IsAuthenticated]
-
     def patch(self, request):
+        """
+        Suma pasos del día para el usuario autenticado, aplicando multiplicador si corresponde.
+        Reemplaza las views previas: StepCountView y AddStepsView.
+        """
         nuevos_pasos = request.data.get("pasos")
 
         if not isinstance(nuevos_pasos, int):
@@ -82,7 +80,7 @@ class StepUpdateView(APIView):
         logger.info("%s agregó %s pasos (x%.1f). Monedas: +%s", request.user.email, nuevos_pasos, multiplicador, monedas_adicionales)
 
         return Response({
-            "pasos_hoy": step_obj.pasos,
-            "pasos_totales": request.user.pasos_totales,
-            "monedas": request.user.monedas_actuales
+            "stepsToday": step_obj.pasos,
+            "totalSteps": request.user.pasos_totales,
+            "coins": request.user.monedas_actuales
         }, status=HTTP_200_OK)
