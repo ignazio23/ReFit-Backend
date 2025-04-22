@@ -58,6 +58,38 @@ class UserDetailView(APIView):
             return Response(data, status=HTTP_200_OK)
         logger.error("Error al actualizar datos del usuario autenticado: %s", serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """
+        Actualiza los datos personales del usuario autenticado.
+        """
+        user = request.user
+        serializer = EditPersonalDataSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info("Datos del usuario autenticado actualizados.")
+            return Response(LoginResponseSerializer(user).data, status=HTTP_200_OK)
+        logger.error("Error al actualizar datos del usuario autenticado: %s", serializer.errors)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        """
+        Elimina lógicamente la cuenta del usuario (bloqueo + fecha de solicitud).
+        """
+        user = request.user
+        if not user.is_active:
+            return Response({"detail": "La cuenta ya fue desactivada permanentemente."}, status=HTTP_400_BAD_REQUEST)
+
+        if user.blocked:
+            return Response({"detail": "Tu cuenta ya está en proceso de eliminación."}, status=HTTP_200_OK)
+
+        user.blocked = True
+        user.lock_date = timezone.now()
+        user.save()
+
+        return Response({
+            "message": "Cuenta marcada para eliminación lógica. Tienes 30 días para reactivarla con login."
+        }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
 # Edición de imagen de perfil
@@ -95,18 +127,19 @@ class UploadProfilePictureView(APIView):
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
-# Edición de datos personales y objetivo diario
+# Edición de datos y objetivo diario - Se unifica en UserDetailView
 # --------------------------------------------------------------------------
+"""
 class EditPersonalDataView(APIView):
-    """
+    ""
     Permite actualizar nombre, apellidos y email del usuario autenticado.
-    """
+    ""
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
-        """
+        ""
         Actualiza los datos personales del usuario autenticado.
-        """
+        ""
         serializer = EditPersonalDataSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -114,7 +147,7 @@ class EditPersonalDataView(APIView):
             return Response({"detail": "Datos actualizados correctamente"}, status=HTTP_200_OK)
         logger.error("Error al actualizar datos personales para el usuario %s: %s", request.user.email, serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
+"""
 # --------------------------------------------------------------------------
 # Edición del objetivo diario
 # --------------------------------------------------------------------------
@@ -154,24 +187,31 @@ class UserLastLoginView(APIView):
         return Response({"ultimo_login": ultimo_login}, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
-# Eliminación lógica de cuenta
+# Eliminación lógica de cuenta - Se unifica en UserDetailView
 # --------------------------------------------------------------------------   
+"""
 class DeleteAccountView(APIView):
-    """
+    ""
     Marca la cuenta del usuario autenticado para eliminación lógica en 30 días.
-    """
+    ""
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def delete(self, request):
         user = request.user
 
+        if not user.is_active:
+            return Response({"detail": "La cuenta ya fue desactivada permanentemente."}, status=HTTP_400_BAD_REQUEST)
+
         if user.blocked:
-            return Response({"detail": "Ya has solicitado eliminar tu cuenta."}, status=HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Tu cuenta ya está en proceso de eliminación."}, status=HTTP_200_OK)
 
         user.blocked = True
         user.lock_date = timezone.now()
         user.save()
 
-        logger.info("Usuario %s marcó su cuenta para eliminación lógica.", user.email)
+        logger.info("El usuario %s ha solicitado la eliminación lógica de su cuenta.", user.email)
 
-        return Response({"message": "La cuenta será eliminada en 30 días si no inicias sesión."}, status=HTTP_200_OK)
+        return Response({
+            "message": "Cuenta marcada para eliminación lógica. Tienes 30 días para reactivarla con login."
+        }, status=HTTP_200_OK)
+"""
