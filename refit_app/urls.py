@@ -55,13 +55,13 @@ urlpatterns = [
     ])),
 
     # Usuario y Perfil
-    path("users/", include([
-        path("profile/", UserDetailView.as_view(), name="user-profile"),                        # GET / PUT
+    path("users/me/", include([
+        path("", UserDetailView.as_view(), name="user-profile"),                        # GET / PUT
         path("edit-profile/", EditPersonalDataView.as_view(), name="edit-user"),                # PUT
         path("profile-picture/", UploadProfilePictureView.as_view(), name="profile-picture"),   # PATCH
         path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),               # PATCH
         path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),               # GET
-        path("referred/", ReferredUsersView.as_view(), name="user-referred"),                   # GET
+        path("referrals/", ReferredUsersView.as_view(), name="user-referred"),                   # GET
         path("delete-account/", DeleteAccountView.as_view(), name="delete-account"),            # POST
     ])),
 
