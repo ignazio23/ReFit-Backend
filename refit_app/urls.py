@@ -9,8 +9,8 @@ from refit_app.views.auth_views import (
     PasswordRecoveryView, ResetPasswordView
 )
 from refit_app.views.profile_views import (
-    UserDetailView, EditDailyGoalView, EditPersonalDataView,
-    UserLastLoginView
+    UserDetailView, EditDailyGoalView, 
+    UploadProfilePictureView, UserLastLoginView
 )
 from refit_app.views.product_views import (
     ProductView, ExchangeProductView, CategoriaCreateView, EditProductImageView,
@@ -57,7 +57,7 @@ urlpatterns = [
     # Usuario y Perfil
     path("users/me/", include([
         path("", UserDetailView.as_view(), name="user-profile"),                                # GET / PUT/PATCH / DELETE
-        path("profile-picture/", UserDetailView.as_view(), name="profile-picture"),             # PATCH
+        path("profile-picture/", UploadProfilePictureView.as_view(), name="profile-picture"),             # PATCH
         path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),               # PATCH
         path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),               # GET
         path("referrals/", ReferredUsersView.as_view(), name="user-referred"),                  # GET 
