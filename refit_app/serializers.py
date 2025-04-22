@@ -262,13 +262,13 @@ class EditPersonalDataSerializer(serializers.ModelSerializer):
     Serializador para editar los datos personales del usuario.
     """
     name = serializers.CharField(source='nombre', required=False)
-    surnames = serializers.CharField(source='apellidos', required=False)
+    surname = serializers.CharField(source='apellidos', required=False)
     birthDate = serializers.DateField(source='fecha_nacimiento', required=False)
     gender = serializers.CharField(source='genero', required=False)
 
     class Meta:
         model = User
-        fields = ('name', 'surnames', 'birthDate', 'gender')
+        fields = ('name', 'surname', 'birthDate', 'gender')
     
     def validate_email(self, value):
         """
