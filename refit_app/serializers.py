@@ -206,13 +206,11 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
     """
     name = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
-    coins = serializers.IntegerField(source='monedas_actuales')
     steps = serializers.IntegerField(source='pasos_totales')
-    streak = serializers.IntegerField(source='racha')
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'image', 'coins', 'steps', 'streak')
+        fields = ('id',  'image', 'name', 'steps')
 
     def get_name(self, obj):
         """
