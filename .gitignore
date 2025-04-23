@@ -37,6 +37,7 @@ test.log.*
 venv/
 env/
 
+requirements-dev.txt  
 # ========================
 # IDEs y editores
 # ========================
@@ -67,10 +68,12 @@ Docker/
 Dockerfile
 docker-compose.yml
 local.py
+
 # ========================
 # TESTING
 # ========================
 testing.py
+
 # ========================
 # PROD
 # ========================
