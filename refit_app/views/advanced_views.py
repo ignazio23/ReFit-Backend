@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 # Autor: Ignacio da Rosa – MVP 1 – 2025/04/02
 # Descripción: Vistas de funcionalidad avanzada para la API de ReFit.
 # ============================================================================
+# ---------------------------------------------------------------------------
+# USUARIOS REFERIDOS
+# ---------------------------------------------------------------------------
 class ReferredUsersView(APIView):
     """
     Devuelve los usuarios referidos por el usuario autenticado.
@@ -44,6 +47,9 @@ class ReferredUsersView(APIView):
         logger.info("User %s requested referred users.", request.user.email)
         return Response(data, status=HTTP_200_OK)
 
+# ----------------------------------------------------------------------------
+# PARÁMETROS DE RECOMPENSA
+# ----------------------------------------------------------------------------
 class RecompensasParametrosView(APIView):
     """
     Devuelve los parámetros de recompensa.
@@ -59,6 +65,9 @@ class RecompensasParametrosView(APIView):
         logger.info("User %s requested reward parameters.", request.user.email)
         return Response(data, status=HTTP_200_OK)
 
+# ----------------------------------------------------------------------------
+# HISTORIAL DE PASOS Y CANJES
+# ----------------------------------------------------------------------------
 class HistoricalStepsView(APIView):
     """
     Devuelve el historial de pasos del usuario autenticado.
@@ -74,6 +83,9 @@ class HistoricalStepsView(APIView):
         logger.info("User %s requested historical steps.", request.user.email)
         return Response(data, status=HTTP_200_OK)
 
+# ----------------------------------------------------------------------------
+# HISTORIAL DE CANJES
+# ----------------------------------------------------------------------------
 class HistoricalCanjesView(APIView):
     """
     Devuelve el historial de canjes del usuario autenticado.
@@ -121,9 +133,9 @@ class UploadImageView(APIView):
             "url": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_201_CREATED)
 
-# ============================================================================
-# SERVE IMAGE VIEW (desarrollo o emergencia)
-# ============================================================================
+# ----------------------------------------------------------------------------
+# SERVICIO DE IMÁGENES
+# ----------------------------------------------------------------------------
 class ServeImageView(APIView):
     """
     Sirve una imagen almacenada en /media/ si existe, usando su UUID con extensión.

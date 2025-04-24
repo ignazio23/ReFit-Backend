@@ -209,9 +209,9 @@ class PasswordRecoveryView(APIView):
         token = uuid.uuid4().hex
 
         # Eliminar tokens anteriores (opcional, seguridad)
-        PasswordRecovery.objects.filter(fk_usuario=user).delete()
+        PasswordRecovery.objects.filter(user=user).delete()
 
-        PasswordRecovery.objects.create(fk_usuario=user, token=token)
+        PasswordRecovery.objects.create(user=user, token=token)
 
         # Construir y enviar el deep link
         deep_link = f"refit://reset-password?token={token}"

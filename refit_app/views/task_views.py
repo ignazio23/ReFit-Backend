@@ -13,6 +13,7 @@ from refit_app.serializers import (
     ObjetivoDiarioSerializer,
     UsuarioObjetivoDiarioSerializer,
     EditDailyObjetiveSerializer,
+    SimpleObjetivoDiarioSerializer,
     CheckDailyTaskSerializer,
     ExchangeDailyTaskSerializer
 )
@@ -123,7 +124,7 @@ class ObjetivoDiarioListView(APIView):
         Lista todos los objetivos diarios generales.
         """
         objetivos = ObjetivoDiario.objects.all().order_by('-fecha_creacion')
-        serializer = ObjetivoDiarioSerializer(objetivos, many=True)
+        serializer = SimpleObjetivoDiarioSerializer(objetivos, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------

@@ -37,17 +37,14 @@ class ContactUsView(APIView):
         """
         serializer = ContactUsSerializer(data=request.data)
         if serializer.is_valid():
-            # Preparar los datos del correo
             subject = "Nuevo mensaje de contacto"
+            user = request.user
             message = (
-                f"Nombre: {serializer.validated_data['name']}\n"
-                f"Email: {serializer.validated_data['email']}\n"
+                f"Usuario: {user.nombre} {user.apellidos}\n"
+                f"Email: {user.email}\n"
                 f"Mensaje: {serializer.validated_data['message']}"
             )
-            # Placeholder: Enviar correo. Asegúrate de tener configuradas las variables en settings.py
-            # Activar el send_mail de debajo
             # send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [settings.SUPPORT_EMAIL])
-            logger.info("Mensaje de contacto recibido de %s", serializer.validated_data['email'])
             return Response({"message": "Mensaje enviado con éxito."}, status=HTTP_200_OK)
         logger.error("Error en el envío de contacto: %s", serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)

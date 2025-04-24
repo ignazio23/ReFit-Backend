@@ -313,8 +313,8 @@ class ContactUsSerializer(serializers.Serializer):
     """
     Serializador para el formulario de contacto.
     """
-    name = serializers.CharField()
-    email = serializers.EmailField()
+    #name = serializers.CharField()
+    #email = serializers.EmailField()
     message = serializers.CharField()
 
     def validate_message(self, value):
@@ -491,6 +491,17 @@ class ObjetivoDiarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El premio debe ser positivo.")
         return value
 
+class SimpleObjetivoDiarioSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='nombre')
+    prize = serializers.IntegerField(source='premio')
+
+    class Meta:
+        model = ObjetivoDiario
+        fields = ('id', 'name', 'prize')
+
+# ------------------------------------------------------------------------------
+# Serializador para la visualización de objetivos diarios asignados a usuarios.
+# ------------------------------------------------------------------------------
 class UsuarioObjetivoDiarioSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización de objetivos diarios asignados a usuarios. 
@@ -726,13 +737,14 @@ class ReferredUserSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización de usuarios referidos. 
     """
-    full_name = serializers.SerializerMethodField()
+    fullName = serializers.SerializerMethodField()
+    createdAt = serializers.DateField(source='fecha_registro', format="%d/%m/%Y")
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'full_name', 'fecha_registro')
+        fields = ('id', 'email', 'fullName', 'createdAt')
 
-    def get_full_name(self, obj):
+    def get_fullName(self, obj):
         """
         Devuelve el nombre completo del usuario.
         """
