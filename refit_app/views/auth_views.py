@@ -201,7 +201,7 @@ class PasswordRecoveryView(APIView):
             return Response({"error": "Debe ingresar un email."}, status=HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(email=email, active=True)
+            user = User.objects.get(email=email, is_active=True)
         except User.DoesNotExist:
             return Response({"error": "Usuario no encontrado o cuenta inactiva."}, status=HTTP_404_NOT_FOUND)
 

@@ -183,14 +183,10 @@ class Categoria(models.Model):
         return self.pk_categorias
 
 # --------------------------------------------------------------------------
-# CATEGORIAS_IMAGENES
+# CATEGORIAS IMAGENES
 # --------------------------------------------------------------------------
 class CategoriaImagen(models.Model):
-    """
-    Modelo para almacenar la relación entre categorías e imágenes.
-    Permite asignar múltiples imágenes a una categoría.
-    """
-    pk_categorias_imagenes = models.AutoField(primary_key=True, verbose_name="ID categoria-imagen")
+    pk_categorias_imagenes = models.AutoField(primary_key=True)
     fk_categorias = models.ForeignKey(
         Categoria, on_delete=models.CASCADE, related_name="imagenes"
     )
@@ -251,7 +247,7 @@ class RedeemProduct(models.Model):
     class Meta:
         verbose_name = '"PRODUCTOS_CANJEADOS"'
         verbose_name_plural = 'Productos Canjeados'
-        db_table = 'rf_historial_canje_productos'
+        db_table = '"HISTORIAL_PRODUCTOS_CANJEADOS"'
 
     def __str__(self):
         return f"Producto: {self.product}, Usuario: {self.user.email}"
