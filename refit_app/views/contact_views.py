@@ -44,18 +44,36 @@ class ContactUsView(APIView):
             apellidos = getattr(user, "apellidos", "")
             email = getattr(user, "email", "Sin email registrado")
 
-            subject = "Nuevo mensaje de contacto"
-            user = request.user
-            message = (
-                f"Usuario: {user.nombre} {user.apellidos}\n"
-                f"Email: {user.email}\n"
-                f"Mensaje: {serializer.validated_data['message']}"
+            # Mensaje interno a Soporte
+            support_subject = "Nuevo mensaje de contacto desde la app"
+            support_message = (
+                f"Usuario: {nombre} {apellidos}\n"
+                f"Email: {email}\n"
+                f"Mensaje:\n{serializer.validated_data['message']}"
+            )
+            send_mail(
+                subject=support_subject,
+                message=support_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.SUPPORT_EMAIL],
+                fail_silently=False,
             )
 
-            # (Aquí iría send_mail si tuvieras SMTP configurado)
-            # send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [settings.SUPPORT_EMAIL])
+            # Mensaje de confirmación al usuario
+            user_subject = "¡Gracias por contactarte con ReFit!"
+            user_message = (
+                "Este es un correo automático para confirmar que hemos recibido tu mensaje.\n\n"
+                "El equipo de ReFit leerá tu consulta y nos pondremos en contacto contigo a la brevedad posible.\n\n"
+                "¡Gracias por confiar en nosotros!"
+            )
+            send_mail(
+                subject=user_subject,
+                message=user_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
 
             return Response({"message": "Mensaje enviado con éxito."}, status=HTTP_200_OK)
-        
-        logger.error("Error en el envío de contacto: %s", serializer.errors)
+
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)

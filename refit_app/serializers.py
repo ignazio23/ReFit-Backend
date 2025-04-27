@@ -738,7 +738,7 @@ class ReferredUserSerializer(serializers.ModelSerializer):
     Serializador para la visualización de usuarios referidos. 
     """
     fullName = serializers.SerializerMethodField()
-    createdAt = serializers.DateField(source='fecha_registro', format="%d/%m/%Y")
+    createdAt = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -751,7 +751,9 @@ class ReferredUserSerializer(serializers.ModelSerializer):
         return f"{obj.nombre} {obj.apellidos}"
     
     def get_createdAt(self, obj):
-        # Convertir datetime a date en formato dd/MM/yyyy
+        """
+        Convertir datetime a date en formato dd/MM/yyyy
+        """
         if obj.fecha_registro:
             return obj.fecha_registro.strftime("%d/%m/%Y")
         return None
