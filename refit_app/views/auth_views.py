@@ -227,10 +227,13 @@ class PasswordRecoveryView(APIView):
             f"El equipo de ReFit."
         )
 
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
-        logger.info("Enlace de recuperación enviado a %s", email)
+        # Guardar el deep link en log y devolverlo para testing
+        logger.info("Enlace de recuperación generado para %s: %s", email, deep_link)
 
-        return Response({"message": "Se ha enviado un enlace de recuperación a tu correo."}, status=HTTP_200_OK)
+        return Response({
+            "message": "Enlace de recuperación generado exitosamente.",
+            "deepLink": deep_link
+        }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
 # Restablecer contraseña mediante token
