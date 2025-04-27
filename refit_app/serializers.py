@@ -750,6 +750,12 @@ class ReferredUserSerializer(serializers.ModelSerializer):
         """
         return f"{obj.nombre} {obj.apellidos}"
     
+    def get_createdAt(self, obj):
+        # Convertir datetime a date en formato dd/MM/yyyy
+        if obj.fecha_registro:
+            return obj.fecha_registro.strftime("%d/%m/%Y")
+        return None
+    
 # ------------------------------------------------------------------------------
 # Recompensas dinámicas
 # ------------------------------------------------------------------------------

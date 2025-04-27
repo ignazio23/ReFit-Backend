@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
 
 from refit_app.serializers import ContactUsSerializer
 
@@ -28,7 +29,7 @@ class ContactUsView(APIView):
     SUPPORT_EMAIL = 'soporte@refit.lat'
     DEFAULT_FROM_EMAIL = 'info@refit.lat'
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """
@@ -37,6 +38,12 @@ class ContactUsView(APIView):
         """
         serializer = ContactUsSerializer(data=request.data)
         if serializer.is_valid():
+            # Aca seteamos de forma segura los datos del usuario autenticado
+            user = request.user
+            nombre = getattr(user, "nombre", "Usuario")
+            apellidos = getattr(user, "apellidos", "")
+            email = getattr(user, "email", "Sin email registrado")
+
             subject = "Nuevo mensaje de contacto"
             user = request.user
             message = (
@@ -44,7 +51,11 @@ class ContactUsView(APIView):
                 f"Email: {user.email}\n"
                 f"Mensaje: {serializer.validated_data['message']}"
             )
+
+            # (Aquí iría send_mail si tuvieras SMTP configurado)
             # send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [settings.SUPPORT_EMAIL])
+
             return Response({"message": "Mensaje enviado con éxito."}, status=HTTP_200_OK)
+        
         logger.error("Error en el envío de contacto: %s", serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
