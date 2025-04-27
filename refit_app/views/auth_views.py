@@ -236,12 +236,13 @@ class PasswordRecoveryView(APIView):
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
-# Restablecer contraseña mediante token
+# Restablecer contraseña mediante token - NO SE USA POR EL MOMENTO
 # --------------------------------------------------------------------------   
+"""
 class ResetPasswordView(APIView):
-    """
+    ""
     Permite al usuario establecer una nueva contraseña usando el token enviado por email.
-    """
+    ""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -276,4 +277,4 @@ class ResetPasswordView(APIView):
 
         logger.info("Contraseña actualizada mediante token para el usuario %s", user.email)
         return Response({"message": "Contraseña actualizada correctamente."}, status=HTTP_200_OK)
-   
+"""
