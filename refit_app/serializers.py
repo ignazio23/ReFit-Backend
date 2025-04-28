@@ -130,6 +130,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     lastLogin  = serializers.DateTimeField(source='last_login', format="%Y-%m-%d %H:%M:%S", read_only=True)
     updatePassword = serializers.BooleanField(source='update_password')
     referred = serializers.SerializerMethodField()
+    referralCode = serializers.CharField(source='codigo_referido')
     profilePicture = serializers.SerializerMethodField()
     coins = serializers.IntegerField(source='monedas_actuales')
     dailySteps = serializers.SerializerMethodField()
@@ -142,7 +143,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
             'monthlySteps', 'leaderBoardPosition', 'firstLogin', 'profilePicture',
-            'lastLogin', 'updatePassword', 'referred', 'birthDate', 'gender'
+            'lastLogin', 'updatePassword', 'referralCode', 'referred', 'birthDate', 'gender'
         )
     
     def get_profilePicture(self, obj):
