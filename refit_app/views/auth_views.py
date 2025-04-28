@@ -213,7 +213,9 @@ class PasswordRecoveryView(APIView):
             PasswordRecovery.objects.filter(user=user).delete()
             PasswordRecovery.objects.create(user=user, token=recovery_token)
 
-            deep_link = f"refit://reset-password?token={recovery_token}"
+            # Nueva construcción del deep_link para mails
+            deep_link = f"https://refit.lat/reset-password?token={recovery_token}"
+
 
             # Preparar el mail HTML
             subject = "Solicitud de restablecimiento de contraseña"
