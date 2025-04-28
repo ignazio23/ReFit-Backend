@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 import uuid
 import os
+from django.db.models import Q
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
@@ -14,7 +15,8 @@ from refit_app.serializers import (
     EditDailyObjetiveSerializer,
     EditPersonalDataSerializer,
     LoginResponseSerializer,
-    UserSerializer
+    UserSerializer,
+    PublicUserProfileSerializer
 )
 from refit_app.models import User, Imagen
 
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # PROFILE VIEWS – ReFit App
 # Idioma: Código en inglés / Comentarios en español
-# Autor: Ignacio da Rosa – MVP 1 – 2025/04/02
+# Autor: Ignacio da Rosa – MVP 1 – 2025/04/28
 # Descripción: Vistas API relacionadas al perfil del usuario y su edición.
 # ============================================================================
 # --------------------------------------------------------------------------
@@ -195,31 +197,33 @@ class UserLastLoginView(APIView):
         return Response({"ultimo_login": ultimo_login}, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
-# Eliminación lógica de cuenta - Se unifica en UserDetailView
+# Visualización de otros Usuarios
 # --------------------------------------------------------------------------   
-"""
-class DeleteAccountView(APIView):
-    ""
-    Marca la cuenta del usuario autenticado para eliminación lógica en 30 días.
-    ""
+class PublicUserProfileView(APIView):
+    """
+    Permite obtener el perfil público de un usuario por ID,
+    o buscar usuarios por nombre y apellido si no se pasa ID.
+    """
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request):
-        user = request.user
+    def get(self, request, user_id=None):
+        name = request.query_params.get('name')
+        surname = request.query_params.get('surname')
 
-        if not user.is_active:
-            return Response({"detail": "La cuenta ya fue desactivada permanentemente."}, status=HTTP_400_BAD_REQUEST)
+        if user_id:
+            user = get_object_or_404(User, pk=user_id, is_active=True)
+            serializer = PublicUserProfileSerializer(user, context={'request': request})
+            return Response(serializer.data, status=HTTP_200_OK)
 
-        if user.blocked:
-            return Response({"detail": "Tu cuenta ya está en proceso de eliminación."}, status=HTTP_200_OK)
+        elif name or surname:
+            filters = Q()
+            if name:
+                filters &= Q(nombre__icontains=name)
+            if surname:
+                filters &= Q(apellidos__icontains=surname)
 
-        user.blocked = True
-        user.lock_date = timezone.now()
-        user.save()
+            users = User.objects.filter(filters, is_active=True)
+            serializer = PublicUserProfileSerializer(users, many=True, context={'request': request})
+            return Response(serializer.data, status=HTTP_200_OK)
 
-        logger.info("El usuario %s ha solicitado la eliminación lógica de su cuenta.", user.email)
-
-        return Response({
-            "message": "Cuenta marcada para eliminación lógica. Tienes 30 días para reactivarla con login."
-        }, status=HTTP_200_OK)
-"""
+        return Response({"error": "Debe proporcionar un userId o parámetros de búsqueda."}, status=400)

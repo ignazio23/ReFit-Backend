@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
 from refit_app.models import (
     User, Pasos, Producto, Categoria, Imagen, Parametro, UsuarioObjetivoDiario,
-    Transaccion, ProductoCategoria, Canje, ProductoImagen, ObjetivoDiario
+    Transaccion, ProductoCategoria, Canje, ProductoImagen, ObjetivoDiario, FAQ
 )
 from datetime import date
 from django.utils import timezone
@@ -847,3 +847,41 @@ class HistoricalCanjeSerializer(serializers.ModelSerializer):
         if imagen:
             return f"{settings.MEDIA_URL}{imagen.uuid}.{imagen.extension}"
         return None
+
+# ------------------------------------------------------------------------------
+# Perfil Público
+# ------------------------------------------------------------------------------   
+class PublicUserProfileSerializer(serializers.ModelSerializer):
+    profilePicture = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ("id", "name", "surname", "profilePicture", "monthlySteps", "leaderBoardPosition")
+
+    name = serializers.CharField(source="nombre")
+    surname = serializers.CharField(source="apellidos")
+    monthlySteps = serializers.IntegerField(source="pasos_totales")
+
+    leaderBoardPosition = serializers.SerializerMethodField()
+
+    def get_profilePicture(self, obj):
+        request = self.context.get("request")
+        if obj.image and obj.image.nombre_logico:
+            return f"{request.scheme}://{request.get_host()}/media/public/{obj.image.nombre_logico}{obj.image.extension.strip('.') and '.' or ''}{obj.image.extension}"
+        return None
+
+    def get_leaderBoardPosition(self, obj):
+        usuarios = User.objects.filter(is_staff=False).order_by('-pasos_totales').values_list('pk', flat=True)
+        try:
+            return list(usuarios).index(obj.pk) + 1
+        except ValueError:
+            return None
+
+# ------------------------------------------------------------------------------
+# FAQ
+# ------------------------------------------------------------------------------
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+        fields = ("id", "question", "answer")
+

@@ -10,16 +10,17 @@ from django.core.files.base import ContentFile
 from rest_framework.response import Response
 from django.core.files.storage import default_storage
 from datetime import datetime
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
-from refit_app.models import User, Parametro, Pasos, Canje, Imagen
+from refit_app.models import User, Parametro, Pasos, Canje, Imagen, FAQ
 from refit_app.serializers import (
     ReferredUserSerializer,
     RecompensaParametroSerializer,
     HistoricalStepsSerializer,
     HistoricalCanjeSerializer,
-    ImagenSerializer
+    ImagenSerializer,
+    FAQSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -180,3 +181,17 @@ class ServeImageView(APIView):
             "uuid": imagen.uuid,
             "url": public_url
         }, status=HTTP_200_OK)
+    
+# ------------------------------------------------------------------------------
+# FAQ
+# ------------------------------------------------------------------------------
+class FAQListView(APIView):
+    """
+    Devuelve la lista de FAQs.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        faqs = FAQ.objects.all().order_by('id')
+        serializer = FAQSerializer(faqs, many=True)
+        return Response(serializer.data, status=HTTP_200_OK)

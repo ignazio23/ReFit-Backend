@@ -9,7 +9,7 @@ from refit_app.views.auth_views import (
     PasswordRecoveryView
 )
 from refit_app.views.profile_views import (
-    UserDetailView, EditDailyGoalView, 
+    UserDetailView, EditDailyGoalView, PublicUserProfileView,
     UploadProfilePictureView, UserLastLoginView
 )
 from refit_app.views.product_views import (
@@ -25,7 +25,7 @@ from refit_app.views.social_views import FollowingFriendsView, LeaderboardView, 
 from refit_app.views.contact_views import ContactUsView
 from refit_app.views.advanced_views import (
     ReferredUsersView, RecompensasParametrosView, HistoricalStepsView, 
-    HistoricalCanjesView, UploadImageView, ServeImageView
+    HistoricalCanjesView, UploadImageView, ServeImageView, FAQListView
 )
 from refit_app.views.status_views import RefreshTimestampView  
 
@@ -55,11 +55,11 @@ urlpatterns = [
 
     # Usuario y Perfil
     path("users/me/", include([
-        path("", UserDetailView.as_view(), name="user-profile"),                                # GET / PUT/PATCH / DELETE
-        path("profile-picture/", UploadProfilePictureView.as_view(), name="profile-picture"),   # PATCH
-        path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),               # PATCH
-        path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),               # GET
-        path("referrals/", ReferredUsersView.as_view(), name="user-referred"),                  # GET 
+        path("", UserDetailView.as_view(), name="user-profile"),                                    # GET / PUT/PATCH / DELETE
+        path("profile-picture/", UploadProfilePictureView.as_view(), name="profile-picture"),       # PATCH
+        path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),                   # PATCH
+        path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),                   # GET
+        path("referrals/", ReferredUsersView.as_view(), name="user-referred"),                      # GET 
     ])),
 
     # Conteo de Pasos
@@ -96,14 +96,17 @@ urlpatterns = [
 
     # Social / Ranking
     path("social/", include([
-        path("leaderboard/", LeaderboardView.as_view(), name="leaderboard"),                    # GET
-        path("friends/", FollowingFriendsView.as_view(), name="following-friends"),             # GET / POST
-        path("ranking/", UsuarioRankingView.as_view(), name="user-ranking"),                    # GET
+        path("leaderboard/", LeaderboardView.as_view(), name="leaderboard"),                        # GET
+        path("friends/", FollowingFriendsView.as_view(), name="following-friends"),                 # GET / POST
+        path("ranking/", UsuarioRankingView.as_view(), name="user-ranking"),                        # GET
+        path('<int:user_id>/profile/', PublicUserProfileView.as_view(), name="public_user_profile"),# GET
+        path('search-profile/', PublicUserProfileView.as_view(), name="search_public_profiles"),    # GET
     ])),
 
     # Configuración
     path("config/", include([
         path("rewards/", RecompensasParametrosView.as_view(), name="config-rewards"),           # GET
+        path('faqs/', FAQListView.as_view(), name="faq_list"),                                  # GET
     ])),
 
     # Imágenes

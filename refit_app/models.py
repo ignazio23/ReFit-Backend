@@ -407,3 +407,18 @@ class UserFollowing(models.Model):
 
     def __str__(self):
         return f"{self.user.email} sigue a {self.following.email}"
+    
+# --------------------------------------------------------------------------
+# FAQS
+# --------------------------------------------------------------------------
+class FAQ(models.Model):
+    """
+    Modelo para almacenar preguntas frecuentes (FAQ).
+    """
+    id = models.AutoField(primary_key=True)
+    question = models.TextField(verbose_name="Pregunta")
+    answer = models.TextField(verbose_name="Respuesta")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = '"FAQS"'
