@@ -122,7 +122,6 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     Mapea campos del modelo a nombres más amigables y calcula datos adicionales como
     la posición en el leaderboard.
     """
-    id = serializers.IntegerField(source='id')
     email = serializers.EmailField(source='email')
     name = serializers.CharField(source='nombre')
     surname = serializers.CharField(source='apellidos')
@@ -145,7 +144,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
+            'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
             'monthlySteps', 'leaderBoardPosition', 'firstLogin', 'profilePicture',
             'lastLogin', 'updatePassword', 'referred', 'birthDate', 'gender',
             'accessToken', 'refreshToken'
