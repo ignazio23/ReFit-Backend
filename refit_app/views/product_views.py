@@ -114,6 +114,7 @@ class ProductView(APIView):
         """
         name = request.query_params.get('name')
         category = request.query_params.get('category')
+        featured = request.query_params.get('featured', 'false')  # Asume 'false' si no lo mandan
 
         productos = Producto.objects.filter(disponible=True).order_by('-fecha_creacion')
 
@@ -124,6 +125,11 @@ class ProductView(APIView):
             productos = productos.filter(
                 categorias__nombre__icontains=category
             )
+
+        if featured.lower() == 'true':
+            productos = productos.filter(destacado=True)
+        else:
+            productos = productos.filter(destacado=False)
 
         productos = productos.distinct()
 
