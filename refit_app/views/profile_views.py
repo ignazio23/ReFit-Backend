@@ -109,20 +109,29 @@ class UploadProfilePictureView(APIView):
         ext = os.path.splitext(archivo.name)[-1].lower()
         if ext not in ['.jpg', '.jpeg', '.png']:
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
+        
+        # Nombre lógico
+        nombre_logico = f"{request.user.id}_profile"
 
-        # Guardado en /media/public con nombre estandarizado
-        img_uuid = str(uuid.uuid4())
-        filename = f"{request.user.id}_profile{ext}"
+        # Guardar en /media/public/
+        filename = f"{nombre_logico}{ext}"
         ruta_publica = os.path.join("public", filename)
         default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        imagen = Imagen.objects.create(uuid=img_uuid, extension=ext)
+        # Crear registro en IMAGENES
+        imagen = Imagen.objects.create(
+            uuid=uuid.uuid4(),  # Seguimos usando uuid
+            extension=ext,
+            nombre_logico=nombre_logico
+        )
+
+        # Asignar imagen al usuario
         request.user.image = imagen
         request.user.save()
 
         return Response({
             "message": "Imagen de perfil subida y asignada correctamente.",
-            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
+            "imageUrl": f"http://{request.get_host()}/media/public/{filename}"
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------

@@ -36,7 +36,10 @@ class Imagen(models.Model):
     pk_imagenes = models.AutoField(primary_key=True, verbose_name="ID imagen")
     uuid = models.CharField(max_length=100, unique=True, verbose_name="UUID")
     extension = models.CharField(max_length=10)
+    nombre_logico = models.CharField(max_length=255, null=True, blank=True)
+
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    
 
     class Meta:
         db_table = '"IMAGENES"'
