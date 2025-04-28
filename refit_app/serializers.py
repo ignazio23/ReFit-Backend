@@ -792,7 +792,7 @@ class HistoricalStepsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pasos
-        fields = ('dia', 'pasos')
+        fields = ('date', 'steps')
 
 # ------------------------------------------------------------------------------
 # Historial de Canjes
