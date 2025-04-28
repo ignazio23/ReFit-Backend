@@ -103,7 +103,7 @@ class LoginView(APIView):
             tokens = RefreshToken.for_user(user)
 
             # Serializar datos del usuario
-            serializer = LoginResponseSerializer(user)
+            serializer = LoginResponseSerializer(user, context={'request': request})
             data = serializer.data
 
             data["accessToken"] = str(tokens.access_token)

@@ -40,7 +40,7 @@ class UserDetailView(APIView):
         """
         Devuelve los datos del usuario autenticado.
         """
-        serializer = UserSerializer(request.user)
+        serializer = UserSerializer(request.user, context={'request': request})
         logger.info("Detalles del usuario autenticado recuperados.")
         return Response(serializer.data, status=HTTP_200_OK)
 

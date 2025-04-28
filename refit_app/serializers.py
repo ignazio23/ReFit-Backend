@@ -146,9 +146,13 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         )
     
     def get_profilePicture(self, obj):
+        request = self.context.get('request')
         if obj.image:
-            extension = obj.image.extension.strip('.')
-            return f"{settings.BASE_URL}/media/public/{obj.image.uuid}.{extension}"
+            relative_url = f"/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
+            if request is not None:
+                return request.build_absolute_uri(relative_url)
+            else:
+                return relative_url
         return None
 
     def get_dailySteps(self, obj):
@@ -189,9 +193,13 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'name', 'surname', 'birthDate', 'gender', 'profilePicture')
 
     def get_profilePicture(self, obj):
+        request = self.context.get('request')
         if obj.image:
-            extension = obj.image.extension.strip('.')
-            return f"{settings.BASE_URL}/media/public/{obj.image.uuid}.{extension}"
+            relative_url = f"/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
+            if request is not None:
+                return request.build_absolute_uri(relative_url)
+            else:
+                return relative_url
         return None
 
 # ------------------------------------------------------------------------------
