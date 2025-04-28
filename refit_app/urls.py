@@ -45,7 +45,6 @@ urlpatterns = [
         path("login/", LoginView.as_view(), name="login"),                                      # POST
         path("logout/", LogOutView.as_view(), name="logout"),                                   # POST
         path("update-password/", ChangePasswordView.as_view(), name="change-password"),         # PATCH
-        #path("recover-password/", PasswordRecoveryView.as_view(), name="recover-password"),    # POST
         path("reset-password/", PasswordRecoveryView.as_view(), name="reset-password"),         # POST
         # Endpoint de TOKENS JWT
         path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),                # POST
