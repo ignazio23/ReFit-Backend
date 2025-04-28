@@ -179,8 +179,8 @@ class UserSerializer(serializers.ModelSerializer):
     """
     name = serializers.CharField(source='nombre')
     surname = serializers.CharField(source='apellidos')
-    birthDate = serializers.DateField(source='birth_date', format="%Y-%m-%d", required=False)
-    gender = serializers.CharField(required=False)
+    birthDate = serializers.DateField(source='fecha_nacimiento', format="%Y-%m-%d", required=False)
+    gender = serializers.CharField(source='genero', required=False)
     profilePicture = serializers.SerializerMethodField()
 
     class Meta:
