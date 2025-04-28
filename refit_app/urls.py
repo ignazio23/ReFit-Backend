@@ -61,12 +61,14 @@ urlpatterns = [
         path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),               # PATCH
         path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),               # GET
         path("referrals/", ReferredUsersView.as_view(), name="user-referred"),                  # GET 
-        path("steps-history/", HistoricalStepsView.as_view(), name="history-steps"),                    # GET
     ])),
 
     # Conteo de Pasos
-    path("steps/", StepUpdateView.as_view(), name="daily_steps"),                               # GET / PATCH
-
+    path("steps/", include([
+        path("", StepUpdateView.as_view(), name="daily_steps"),                                 # GET / PATCH
+        path("me/", HistoricalStepsView.as_view(), name="history-steps"),                       # GET
+    ])),
+    
     # Objetivos Diarios
     path("objectives/", include([
         path("", ObjetivoDiarioListView.as_view(), name="list-objetives"),                      # GET
