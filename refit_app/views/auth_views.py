@@ -214,7 +214,7 @@ class PasswordRecoveryView(APIView):
             PasswordRecovery.objects.create(user=user, token=recovery_token)
 
             # Nueva construcción del deep_link para mails
-            deep_link = f"http://3.17.152.152/api/rest/reset-password?token={recovery_token}"
+            deep_link = f"http://3.17.152.152/api/rest/auth/reset-password?token={recovery_token}"
 
 
             # Preparar el mail HTML
