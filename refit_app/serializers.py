@@ -142,8 +142,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
             'monthlySteps', 'leaderBoardPosition', 'firstLogin', 'profilePicture',
-            'lastLogin', 'updatePassword', 'referred', 'birthDate', 'gender',
-            'accessToken', 'refreshToken'
+            'lastLogin', 'updatePassword', 'referred', 'birthDate', 'gender'
         )
     
     def get_profilePicture(self, obj):
