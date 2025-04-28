@@ -146,8 +146,14 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         )
     
     def get_profilePicture(self, obj):
-        if hasattr(obj, 'imagen_obj') and obj.imagen_obj:
-            return f"/media/public/{obj.imagen_obj.uuid}.{obj.imagen_obj.extension.strip('.')}"
+        imagen = getattr(obj, 'imagen', None)
+        if imagen:
+            request = self.context.get('request')
+            if request:
+                base_url = f"{request.scheme}://{request.get_host()}"
+            else:
+                base_url = settings.BASE_URL  # Backup
+            return f"{base_url}/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
         return None
 
     def get_dailySteps(self, obj):
@@ -188,9 +194,14 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'name', 'surname', 'birthDate', 'gender', 'profilePicture')
 
     def get_profilePicture(self, obj):
-        imagen = obj.image
+        imagen = getattr(obj, 'imagen', None)
         if imagen:
-            return f"/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
+            request = self.context.get('request')
+            if request:
+                base_url = f"{request.scheme}://{request.get_host()}"
+            else:
+                base_url = settings.BASE_URL  # Backup
+            return f"{base_url}/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
         return None
 
 # ------------------------------------------------------------------------------
