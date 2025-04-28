@@ -184,97 +184,90 @@ class ChangePasswordView(APIView):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 # --------------------------------------------------------------------------
-# Recuperar contraseña 
+# Recuperar Contraseña 
 # --------------------------------------------------------------------------
 class PasswordRecoveryView(APIView):
     """
-    View para la recuperación de contraseña:
-    - Si recibe solo email: genera nueva contraseña y la envía
-    - Si recibe email + newPassword: actualiza la contraseña
+    View para recuperación de contraseña:
+    - Si recibe solo email: envía deep link por correo.
+    - Si recibe email + newPassword + token: actualiza la contraseña.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get("email")
-
-        if not email:
-            return Response({"error": "Debe ingresar un email."}, status=HTTP_400_BAD_REQUEST)
-
-        try:
-            user = User.objects.get(email=email, is_active=True)
-        except User.DoesNotExist:
-            return Response({"error": "Usuario no encontrado o cuenta inactiva."}, status=HTTP_404_NOT_FOUND)
-
-        # Crear token único
-        token = uuid.uuid4().hex
-
-        # Eliminar tokens anteriores (opcional, seguridad)
-        PasswordRecovery.objects.filter(user=user).delete()
-
-        PasswordRecovery.objects.create(user=user, token=token)
-
-        # Construir y enviar el deep link
-        deep_link = f"refit://reset-password?token={token}"
-
-        subject = "Reestablecer Contraseña – ReFit"
-        message = (
-            f"Hola {user.nombre},\n\n"
-            f"Recibimos una solicitud para restablecer tu contraseña.\n\n"
-            f"Presioná el siguiente enlace desde tu dispositivo móvil para continuar:\n\n"
-            f"{deep_link}\n\n"
-            f"Este enlace expirará en 60 minutos.\n\n"
-            f"Si no solicitaste este cambio, podés ignorar este mensaje.\n\n"
-            f"El equipo de ReFit."
-        )
-
-        # Guardar el deep link en log y devolverlo para testing
-        logger.info("Enlace de recuperación generado para %s: %s", email, deep_link)
-
-        return Response({
-            "message": "Enlace de recuperación generado exitosamente.",
-            "deepLink": deep_link
-        }, status=HTTP_200_OK)
-
-# --------------------------------------------------------------------------
-# Restablecer contraseña mediante token - NO SE USA POR EL MOMENTO
-# --------------------------------------------------------------------------   
-"""
-class ResetPasswordView(APIView):
-    ""
-    Permite al usuario establecer una nueva contraseña usando el token enviado por email.
-    ""
-    permission_classes = [AllowAny]
-
-    def post(self, request):
+        new_password = request.data.get("newPassword")
         token = request.data.get("token")
-        nueva_password = request.data.get("newPassword")
 
-        if not token or not nueva_password:
-            return Response({"error": "Token y nueva contraseña son requeridos."}, status=HTTP_400_BAD_REQUEST)
+        # Recuperar contraseña: generación de deep link
+        if email and not new_password and not token:
+            try:
+                user = User.objects.get(email=email, is_active=True)
+            except User.DoesNotExist:
+                return Response({"error": "Usuario no encontrado o cuenta inactiva."}, status=HTTP_404_NOT_FOUND)
 
-        try:
-            recovery = PasswordRecovery.objects.get(token=token)
-        except PasswordRecovery.DoesNotExist:
-            return Response({"error": "Token inválido o ya utilizado."}, status=HTTP_400_BAD_REQUEST)
+            # Crear token único
+            recovery_token = uuid.uuid4().hex
 
-        # Verificar vencimiento de 60 minutos
-        tiempo_expiracion = recovery.created_at + timedelta(minutes=60)
-        if timezone.now() > tiempo_expiracion:
+            # Eliminar tokens anteriores
+            PasswordRecovery.objects.filter(fk_usuario=user).delete()
+
+            # Guardar nuevo token
+            PasswordRecovery.objects.create(fk_usuario=user, token=recovery_token)
+
+            # Construir deep link
+            deep_link = f"refit://reset-password?token={recovery_token}"
+
+            subject = "Solicitud de restablecimiento de contraseña"
+            message = (
+                f"Este es un correo automático generado por ReFit.\n\n"
+                f"Hemos recibido tu solicitud para restablecer la contraseña de tu cuenta.\n\n"
+                f"Para continuar, por favor sigue el siguiente enlace desde tu dispositivo móvil:\n\n"
+                f"{deep_link}\n\n"
+                f"Si no solicitaste el restablecimiento de tu contraseña, podés ignorar este mensaje.\n\n"
+                f"¡Gracias por confiar en ReFit!"
+            )
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            logger.info("Deep link de recuperación enviado por mail a %s", email)
+            return Response(status=HTTP_200_OK)
+
+        # Resetear contraseña usando token
+        elif email and new_password and token:
+            try:
+                recovery = PasswordRecovery.objects.get(token=token)
+            except PasswordRecovery.DoesNotExist:
+                return Response({"error": "Token inválido o expirado."}, status=HTTP_400_BAD_REQUEST)
+
+            # Verificar expiración de 60 minutos
+            if timezone.now() > (recovery.created_at + timedelta(minutes=60)):
+                recovery.delete()
+                return Response({"error": "El token ha expirado."}, status=HTTP_400_BAD_REQUEST)
+
+            user = recovery.fk_usuario
+
+            if user.email != email:
+                return Response({"error": "Email no coincide con el token."}, status=HTTP_400_BAD_REQUEST)
+
+            if len(new_password) < 8:
+                return Response({"error": "La nueva contraseña debe tener al menos 8 caracteres."}, status=HTTP_400_BAD_REQUEST)
+
+            user.set_password(new_password)
+            user.update_password = False
+            user.save()
+
+            # Eliminar token
             recovery.delete()
-            return Response({"error": "El token ha expirado."}, status=HTTP_400_BAD_REQUEST)
 
-        # Validaciones básicas de seguridad
-        if len(nueva_password) < 8:
-            return Response({"error": "La contraseña debe tener al menos 8 caracteres."}, status=HTTP_400_BAD_REQUEST)
+            logger.info("Contraseña actualizada exitosamente para %s", email)
+            return Response({"message": "Contraseña actualizada correctamente."}, status=HTTP_200_OK)
 
-        user = recovery.fk_usuario
-        user.set_password(nueva_password)
-        user.update_password = False
-        user.save()
-
-        # Eliminar token tras uso
-        recovery.delete()
-
-        logger.info("Contraseña actualizada mediante token para el usuario %s", user.email)
-        return Response({"message": "Contraseña actualizada correctamente."}, status=HTTP_200_OK)
-"""
+        else:
+            return Response({"error": "Parámetros inválidos."}, status=HTTP_400_BAD_REQUEST)

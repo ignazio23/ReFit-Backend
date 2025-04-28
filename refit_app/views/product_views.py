@@ -112,9 +112,23 @@ class ProductView(APIView):
         """
         Devuelve todos los productos disponibles para canje.
         """
+        name = request.query_params.get('name')
+        category = request.query_params.get('category')
+
         productos = Producto.objects.filter(disponible=True).order_by('-fecha_creacion')
-        serializer = ProductSerializer(productos, many=True)
-        return Response(serializer.data, status=HTTP_200_OK)
+
+        if name:
+            productos = productos.filter(nombre__icontains=name)
+
+        if category:
+            productos = productos.filter(
+                categorias__nombre__icontains=category
+            )
+
+        productos = productos.distinct()
+
+        data = ProductSerializer(productos, many=True).data
+        return Response(data, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
 # Listado de categorias disponibles
