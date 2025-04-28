@@ -187,10 +187,20 @@ class UserSerializer(serializers.ModelSerializer):
     birthDate = serializers.DateField(source='fecha_nacimiento', format="%Y-%m-%d", required=False)
     gender = serializers.CharField(source='genero', required=False)
     profilePicture = serializers.SerializerMethodField()
+    referralCode = serializers.CharField(source='codigo_referido')
+    coins = serializers.IntegerField(source='monedas_actuales')
+    dailySteps = serializers.SerializerMethodField()
+    dailyGoal = serializers.IntegerField(source='objetivo_diario')
+    leaderBoardPosition = serializers.SerializerMethodField()
+    monthlySteps = serializers.IntegerField(source='pasos_totales')
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'name', 'surname', 'birthDate', 'gender', 'profilePicture')
+        fields = (
+            'id', 'email', 'name', 'surname', 'birthDate', 'gender', 'referralCode',
+            'profilePicture', 'coins', 'dailySteps', 'dailyGoal', 
+            'leaderBoardPosition', 'monthlySteps'
+            )
 
     def get_profilePicture(self, obj):
         request = self.context.get('request')
