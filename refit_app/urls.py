@@ -61,6 +61,7 @@ urlpatterns = [
         path("daily-goal/", EditDailyGoalView.as_view(), name="edit-daily-goal"),               # PATCH
         path("last-login/", UserLastLoginView.as_view(), name="user-last-login"),               # GET
         path("referrals/", ReferredUsersView.as_view(), name="user-referred"),                  # GET 
+        path("steps-history/", HistoricalStepsView.as_view(), name="history-steps"),                    # GET
     ])),
 
     # Conteo de Pasos
@@ -110,7 +111,6 @@ urlpatterns = [
 
     # Historial
     path("history/", include([
-        path("steps/", HistoricalStepsView.as_view(), name="history-steps"),                    # GET
         path("redemptions/", HistoricalCanjesView.as_view(), name="history-redemptions"),       # GET
     ])),
 

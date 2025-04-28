@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from django.core.files.base import ContentFile
 from rest_framework.response import Response
 from django.core.files.storage import default_storage
+from datetime import datetime
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
@@ -78,9 +79,32 @@ class HistoricalStepsView(APIView):
         """
         Devuelve el historial de pasos del usuario autenticado.
         """
-        pasos = Pasos.objects.filter(fk_usuarios=request.user).order_by('-fecha')
+        user = request.user
+        start_date_str = request.query_params.get('startDate')
+        end_date_str = request.query_params.get('endDate')
+
+        # Sin fechas -> solo los pasos de hoy
+        if not start_date_str or not end_date_str:
+            today = datetime.now().date()
+            pasos = Pasos.objects.filter(fk_usuarios=user, fecha=today).order_by('-fecha')
+        else:
+            try:
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return Response(
+                    {"error": "Formato inválido. Use YYYY-MM-DD para startDate y endDate."},
+                    status=400
+                )
+
+            pasos = Pasos.objects.filter(
+                fk_usuarios=user,
+                fecha__range=(start_date, end_date)
+            ).order_by('-fecha')
+
         data = HistoricalStepsSerializer(pasos, many=True).data
-        logger.info("User %s requested historical steps.", request.user.email)
+
+        logger.info("User %s requested historical steps.", user.email)
         return Response(data, status=HTTP_200_OK)
 
 # ----------------------------------------------------------------------------
