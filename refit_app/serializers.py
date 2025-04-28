@@ -122,7 +122,6 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     Mapea campos del modelo a nombres más amigables y calcula datos adicionales como
     la posición en el leaderboard.
     """
-    email = serializers.EmailField(source='email')
     name = serializers.CharField(source='nombre')
     surname = serializers.CharField(source='apellidos')
     birthDate = serializers.DateField(source='fecha_nacimiento', format="%Y-%m-%d", required=False)
