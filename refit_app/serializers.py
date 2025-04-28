@@ -144,7 +144,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
+            'id', 'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
             'monthlySteps', 'leaderBoardPosition', 'firstLogin', 'profilePicture',
             'lastLogin', 'updatePassword', 'referred', 'birthDate', 'gender',
             'accessToken', 'refreshToken'
