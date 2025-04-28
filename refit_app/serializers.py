@@ -150,9 +150,8 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         )
     
     def get_profilePicture(self, obj):
-        imagen = obj.get('imagen_obj')
-        if imagen:
-            return f"/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
+        if hasattr(obj, 'imagen_obj') and obj.imagen_obj:
+            return f"/media/public/{obj.imagen_obj.uuid}.{obj.imagen_obj.extension.strip('.')}"
         return None
 
     def get_dailySteps(self, obj):
