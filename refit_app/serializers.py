@@ -210,6 +210,23 @@ class UserSerializer(serializers.ModelSerializer):
             if nombre_logico:
                 return f"{request.scheme}://{request.get_host()}/media/public/{nombre_logico}.{extension}"
         return None
+    
+    def get_dailySteps(self, obj):
+        """
+        Retorna el total de pasos del día actual del usuario.
+        """
+        pasos = Pasos.objects.filter(fk_usuarios=obj, fecha=date.today()).first()
+        return pasos.pasos if pasos else 0
+
+    def get_leaderBoardPosition(self, obj):
+        """
+        Calcula la posición del usuario en el ranking basado en pasos totales.
+        """
+        usuarios = User.objects.filter(is_staff=False).order_by('-pasos_totales').values_list('pk', flat=True)
+        try:
+            return list(usuarios).index(obj.pk) + 1
+        except ValueError:
+            return None
 
 # ------------------------------------------------------------------------------
 # Leaderboard
