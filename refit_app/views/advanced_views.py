@@ -86,7 +86,7 @@ class HistoricalStepsView(APIView):
         # Sin fechas -> solo los pasos de hoy
         if not start_date_str or not end_date_str:
             today = datetime.now().date()
-            pasos = Pasos.objects.filter(fk_usuarios=user, fecha=today).order_by('-fecha')
+            steps = Pasos.objects.filter(fk_usuarios=user, fecha=today).order_by('-fecha')
         else:
             try:
                 start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
@@ -97,12 +97,12 @@ class HistoricalStepsView(APIView):
                     status=400
                 )
 
-            pasos = Pasos.objects.filter(
+            steps = Pasos.objects.filter(
                 fk_usuarios=user,
                 fecha__range=(start_date, end_date)
             ).order_by('-fecha')
 
-        data = HistoricalStepsSerializer(pasos, many=True).data
+        data = HistoricalStepsSerializer(steps, many=True).data
 
         logger.info("User %s requested historical steps.", user.email)
         return Response(data, status=HTTP_200_OK)

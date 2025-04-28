@@ -787,8 +787,8 @@ class HistoricalStepsSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización del historial de pasos diarios. 
     """
-    dia = serializers.DateField(source="fecha")
-    pasos = serializers.IntegerField()
+    date = serializers.DateField(source="fecha")
+    steps = serializers.IntegerField(source="pasos")
 
     class Meta:
         model = Pasos
