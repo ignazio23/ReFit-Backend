@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from django.shortcuts import get_object_or_404
 
-from refit_app.models import Producto, Categoria, ProductoCategoria, Canje, Imagen, ProductoImagen, CategoriaImagen
+from refit_app.models import Producto, Categoria, ProductoCategoria, Canje, Imagen, ProductoImagen
 from refit_app.serializers import ProductSerializer, CategoriaSerializer
 
 logger = logging.getLogger(__name__)
@@ -82,21 +82,22 @@ class CategoriaCreateView(APIView):
         Registra una nueva categoría en la tienda.
         Se requiere un código único para la categoría.
         """
-        serializer = CategoriaSerializer(data=request.data)
+        imagen_id = request.data.get("imagen_id")
+        data = request.data.copy()
+
+        if imagen_id:
+            try:
+                imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                data["imagen"] = imagen.pk_imagenes
+            except Imagen.DoesNotExist:
+                return Response({"error": "La imagen especificada no existe."}, status=HTTP_400_BAD_REQUEST)
+        
+        serializer = CategoriaSerializer(data=data)
 
         if serializer.is_valid():
-            categoria = serializer.save()
-
-            # Asociar imagen a la categoría y registrar en CATEGORIAS_IMAGENES
-            imagen_id = request.data.get("imagen_id")
-            if imagen_id:
-                try:
-                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
-                    CategoriaImagen.objects.get_or_create(fk_categorias=categoria, fk_imagenes=imagen)
-                except Imagen.DoesNotExist:
-                    pass
-
+            serializer.save()
             return Response(serializer.data, status=HTTP_201_CREATED)
+
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
     
 # --------------------------------------------------------------------------
@@ -148,9 +149,9 @@ class CategoriaListView(APIView):
         """
         Devuelve todas las categorías disponibles.
         """
-        categorias = Categoria.objects.all().order_by('-fecha_creacion')
-        serializer = CategoriaSerializer(categorias, many=True)
-        return Response(serializer.data, status=HTTP_200_OK)
+        categorias = Categoria.objects.all().order_by('nombre')
+        data = CategoriaSerializer(categorias, many=True).data
+        return Response(data, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
 # Editar producto o categoria existente (Admin)
@@ -274,44 +275,48 @@ class CategoriaEditView(APIView):
         Se requiere un ID de categoría válido.
         """
         categoria = get_object_or_404(Categoria, pk=id_categoria)
-        serializer = CategoriaSerializer(categoria, data=request.data)
+        data = request.data.copy()
+
+        # Actualizar imagen si se envía imagen_id
+        imagen_id = data.get("imagen_id")
+        if imagen_id:
+            try:
+                imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                data["imagen"] = imagen.pk_imagenes
+            except Imagen.DoesNotExist:
+                return Response({"error": "La imagen especificada no existe."}, status=HTTP_400_BAD_REQUEST)
+
+        serializer = CategoriaSerializer(categoria, data=data)
 
         if serializer.is_valid():
-            categoria = serializer.save()
-
-            # Actualizar imagen si se envía imagen_id
-            imagen_id = request.data.get("imagen_id")
-            if imagen_id:
-                try:
-                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
-                    CategoriaImagen.objects.get_or_create(fk_categorias=categoria, fk_imagenes=imagen)
-                except Imagen.DoesNotExist:
-                    pass
-
+            serializer.save()
             return Response(serializer.data, status=HTTP_200_OK)
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    
     def patch(self, request, id_categoria):
         """
         Edita parcialmente una categoría existente en la tienda.
         Se requiere un ID de categoría válido.
         """
         categoria = get_object_or_404(Categoria, pk=id_categoria)
-        serializer = CategoriaSerializer(categoria, data=request.data, partial=True)
+        data = request.data.copy()
+
+        # Actualizar imagen si se envía imagen_id
+        imagen_id = data.get("imagen_id")
+        if imagen_id:
+            try:
+                imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+                data["imagen"] = imagen.pk_imagenes
+            except Imagen.DoesNotExist:
+                return Response({"error": "La imagen especificada no existe."}, status=HTTP_400_BAD_REQUEST)
+
+        serializer = CategoriaSerializer(categoria, data=data, partial=True)
 
         if serializer.is_valid():
-            categoria = serializer.save()
-
-            # Actualizar imagen si se envía imagen_id
-            imagen_id = request.data.get("imagen_id")
-            if imagen_id:
-                try:
-                    imagen = Imagen.objects.get(pk_imagenes=imagen_id)
-                    CategoriaImagen.objects.get_or_create(fk_categorias=categoria, fk_imagenes=imagen)
-                except Imagen.DoesNotExist:
-                    pass
-
+            serializer.save()
             return Response(serializer.data, status=HTTP_200_OK)
+
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
     
 # --------------------------------------------------------------------------

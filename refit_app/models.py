@@ -167,12 +167,15 @@ class ProductoImagen(models.Model):
 # --------------------------------------------------------------------------
 class Categoria(models.Model):
     """
-    Modelo para almacenar categorías de productos.
-    Permite clasificar productos en diferentes categorías para facilitar la búsqueda y organización.
+    Modelo para almacenar las categorías de productos.
+    Cada categoría tiene un nombre único y una imagen asociada.
     """
-    pk_categorias = models.AutoField(primary_key=True, verbose_name="ID categoría")
+    pk_categorias = models.AutoField(primary_key=True, verbose_name="ID Categoría")
     codigo = models.CharField(max_length=50, unique=True, verbose_name="Código")
-    nombre = models.CharField(max_length=50, verbose_name="Nombre")
+    nombre = models.CharField(max_length=100, verbose_name="Nombre")
+    imagen = models.ForeignKey(
+        Imagen, null=True, on_delete=models.SET_NULL, related_name="categorias"
+    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -181,26 +184,6 @@ class Categoria(models.Model):
     @property
     def id(self):
         return self.pk_categorias
-
-# --------------------------------------------------------------------------
-# CATEGORIAS IMAGENES
-# --------------------------------------------------------------------------
-class CategoriaImagen(models.Model):
-    pk_categorias_imagenes = models.AutoField(primary_key=True)
-    fk_categorias = models.ForeignKey(
-        Categoria, on_delete=models.CASCADE, related_name="imagenes"
-    )
-    fk_imagenes = models.ForeignKey(
-        Imagen, on_delete=models.CASCADE, related_name="categoria_imagenes"
-    )
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = '"CATEGORIAS_IMAGENES"'
-
-    @property
-    def id(self):
-        return self.pk_categorias_imagenes
 
 # --------------------------------------------------------------------------
 # PRODUCTOS_CATEGORIAS

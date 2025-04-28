@@ -389,10 +389,8 @@ class CategoriaSerializer(serializers.ModelSerializer):
         fields = ('id', 'code', 'name', 'imageUrl')
     
     def get_imageUrl(self, obj):
-        imagen_rel = obj.imagenes.first()
-        if imagen_rel:
-            imagen = imagen_rel.fk_imagenes
-            return f"/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
+        if obj.imagen:
+            return f"/media/public/{obj.imagen.uuid}.{obj.imagen.extension.strip('.')}"
         return None
 
 # ----------------------------------------------------------------------------
