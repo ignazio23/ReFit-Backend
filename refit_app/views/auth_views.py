@@ -12,6 +12,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 import uuid
 from datetime import timedelta, date
+from django.core.mail import EmailMultiAlternatives
 
 from refit_app.models import User, PasswordRecovery
 from refit_app.serializers import (
@@ -100,9 +101,11 @@ class LoginView(APIView):
 
             # Genera tokens de acceso y actualización
             tokens = RefreshToken.for_user(user)
-            data = LoginResponseSerializer(user).data
 
-            # Añade los tokens a la respuesta
+            # Serializar datos del usuario
+            serializer = LoginResponseSerializer(user)
+            data = serializer.data
+
             data["accessToken"] = str(tokens.access_token)
             data["refreshToken"] = str(tokens)
 
@@ -206,37 +209,48 @@ class PasswordRecoveryView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "Usuario no encontrado o cuenta inactiva."}, status=HTTP_404_NOT_FOUND)
 
-            # Crear token único
             recovery_token = uuid.uuid4().hex
-
-            # Eliminar tokens anteriores
             PasswordRecovery.objects.filter(user=user).delete()
-
-            # Guardar nuevo token
             PasswordRecovery.objects.create(user=user, token=recovery_token)
 
-            # Construir deep link
             deep_link = f"refit://reset-password?token={recovery_token}"
 
+            # Preparar el mail HTML
             subject = "Solicitud de restablecimiento de contraseña"
-            message = (
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [email]
+
+            text_content = (
                 f"Este es un correo automático generado por ReFit.\n\n"
-                f"Hemos recibido tu solicitud para restablecer la contraseña de tu cuenta.\n\n"
-                f"Para continuar, por favor sigue el siguiente enlace desde tu dispositivo móvil:\n\n"
-                f"{deep_link}\n\n"
-                f"Si no solicitaste el restablecimiento de tu contraseña, podés ignorar este mensaje.\n\n"
+                f"Para restablecer tu contraseña, usa este enlace:\n{deep_link}\n\n"
+                f"Si no solicitaste restablecer tu contraseña, puedes ignorar este mensaje.\n\n"
                 f"¡Gracias por confiar en ReFit!"
             )
 
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
-            )
+            html_content = f"""
+                <html>
+                    <body style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+                        <h2 style="color: #0d6efd;">ReFit</h2>
+                        <p>Este es un correo automático generado por ReFit.</p>
+                        <p>Hemos recibido tu solicitud para restablecer la contraseña de tu cuenta.</p>
+                        <p>
+                            Para continuar, por favor haz clic en el siguiente enlace:
+                        </p>
+                        <p>
+                            <a href="{deep_link}" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Restablecer contraseña</a>
+                        </p>
+                        <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+                        <p>¡Gracias por confiar en ReFit!</p>
+                    </body>
+                </html>
+            """
 
-            logger.info("Deep link de recuperación enviado por mail a %s", email)
+            # Enviar email
+            email_message = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send(fail_silently=False)
+
+            logger.info("Deep link de recuperación enviado por correo HTML a %s", email)
             return Response(status=HTTP_200_OK)
 
         # Resetear contraseña usando token
@@ -246,7 +260,6 @@ class PasswordRecoveryView(APIView):
             except PasswordRecovery.DoesNotExist:
                 return Response({"error": "Token inválido o expirado."}, status=HTTP_400_BAD_REQUEST)
 
-            # Verificar expiración de 60 minutos
             if timezone.now() > (recovery.created_at + timedelta(minutes=60)):
                 recovery.delete()
                 return Response({"error": "El token ha expirado."}, status=HTTP_400_BAD_REQUEST)
@@ -263,7 +276,6 @@ class PasswordRecoveryView(APIView):
             user.update_password = False
             user.save()
 
-            # Eliminar token
             recovery.delete()
 
             logger.info("Contraseña actualizada exitosamente para %s", email)

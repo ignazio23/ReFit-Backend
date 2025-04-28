@@ -11,10 +11,10 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
 from refit_app.serializers import (
-    EditProfilePictureSerializer,
     EditDailyObjetiveSerializer,
     EditPersonalDataSerializer,
-    LoginResponseSerializer
+    LoginResponseSerializer,
+    UserSerializer
 )
 from refit_app.models import User, Imagen
 
@@ -40,10 +40,9 @@ class UserDetailView(APIView):
         """
         Devuelve los datos del usuario autenticado.
         """
-        user = request.user
-        data = LoginResponseSerializer(user).data
+        serializer = UserSerializer(request.user)
         logger.info("Detalles del usuario autenticado recuperados.")
-        return Response(data, status=HTTP_200_OK)
+        return Response(serializer.data, status=HTTP_200_OK)
 
     def put(self, request):
         """

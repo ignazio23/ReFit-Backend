@@ -122,34 +122,40 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     Mapea campos del modelo a nombres más amigables y calcula datos adicionales como
     la posición en el leaderboard.
     """
+    id = serializers.IntegerField(source='id')
+    email = serializers.EmailField(source='email')
+    name = serializers.CharField(source='nombre')
+    surname = serializers.CharField(source='apellidos')
+    birthDate = serializers.DateField(source='fecha_nacimiento', format="%Y-%m-%d", required=False)
+    gender = serializers.CharField(source='genero', required=False)
+    firstLogin = serializers.BooleanField(source='first_login')
+    lastLogin  = serializers.DateTimeField(source='last_login', format="%Y-%m-%d %H:%M:%S", read_only=True)
+    updatePassword = serializers.BooleanField(source='update_password')
+    referred = serializers.SerializerMethodField()
     profilePicture = serializers.SerializerMethodField()
-    #image_url = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
     coins = serializers.IntegerField(source='monedas_actuales')
     dailySteps = serializers.SerializerMethodField()
     dailyGoal = serializers.IntegerField(source='objetivo_diario')
     leaderBoardPosition = serializers.SerializerMethodField()
     monthlySteps = serializers.IntegerField(source='pasos_totales')
-    firstLogin = serializers.BooleanField(source='first_login')
-    lastLogin  = serializers.DateTimeField(source='last_login', format="%Y-%m-%d %H:%M:%S", read_only=True)
-    updatePassword = serializers.BooleanField(source='update_password')
-    referred = serializers.SerializerMethodField()
+
+    accessToken = serializers.CharField()
+    refreshToken = serializers.CharField()
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'coins', 'dailySteps', 'dailyGoal', 'monthlySteps', 
-                  'leaderBoardPosition', 'firstLogin', 'profilePicture', 'lastLogin', 'updatePassword', 'referred')
+        fields = (
+            'id', 'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
+            'monthlySteps', 'leaderBoardPosition', 'firstLogin', 'profilePicture',
+            'lastLogin', 'updatePassword', 'referred', 'birthDate', 'gender',
+            'accessToken', 'refreshToken'
+        )
     
     def get_profilePicture(self, obj):
-        if obj.image and obj.image.uuid and obj.image.extension:
-            return f"http://3.17.152.152/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
+        imagen = obj.get('imagen_obj')
+        if imagen:
+            return f"/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
         return None
-
-    def get_name(self, obj):
-        """
-        Concatena el nombre y apellido del usuario.
-        """
-        return f"{obj.nombre} {obj.apellidos}"
 
     def get_dailySteps(self, obj):
         """
@@ -178,21 +184,20 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización y edición del perfil de usuario.
     """
-    image_url = serializers.SerializerMethodField()
+    name = serializers.CharField(source='nombre')
+    surname = serializers.CharField(source='apellidos')
+    birthDate = serializers.DateField(source='birth_date', format="%Y-%m-%d", required=False)
+    gender = serializers.CharField(source='gender', required=False)
+    profilePicture = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = (
-            'id', 'email', 'nombre', 'apellidos', 'genero', 'fecha_nacimiento',
-            'objetivo_diario', 'racha', 'monedas_actuales', 'image_url'
-        )
+        fields = ('id', 'email', 'name', 'surname', 'birthDate', 'gender', 'profilePicture')
 
-    def get_image_url(self, obj):
-        """
-        Retorna la URL de la imagen asociada al usuario.
-        """
-        if obj.imagen and obj.imagen.uuid:
-            return f"/media/{obj.imagen.uuid}{obj.imagen.extension}"
+    def get_profilePicture(self, obj):
+        imagen = obj.image
+        if imagen:
+            return f"/media/public/{imagen.uuid}.{imagen.extension.strip('.')}"
         return None
 
 # ------------------------------------------------------------------------------
