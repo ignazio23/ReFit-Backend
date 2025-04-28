@@ -137,9 +137,6 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     leaderBoardPosition = serializers.SerializerMethodField()
     monthlySteps = serializers.IntegerField(source='pasos_totales')
 
-    accessToken = serializers.CharField()
-    refreshToken = serializers.CharField()
-
     class Meta:
         model = User
         fields = (
