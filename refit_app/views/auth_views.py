@@ -229,20 +229,21 @@ class PasswordRecoveryView(APIView):
 
             html_content = f"""
             <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
-                <h2>Recuperación de contraseña</h2>
-                <p>Este es un correo automático generado por ReFit.</p>
-                <p>Hemos recibido tu solicitud para restablecer la contraseña de tu cuenta.</p>
-                <p>Para continuar, por favor haz clic en el siguiente botón:</p>
-                <p>
-                <a href="{deep_link}" 
-                    style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">
-                    Restablecer contraseña
-                </a>
-                </p>
-                <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
-                <p>¡Gracias por confiar en ReFit!</p>
-            </body>
+                <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
+                    <h2>Recuperación de contraseña</h2>
+                    <p>Este es un correo automático generado por ReFit.</p>
+                    <p>Hemos recibido tu solicitud para restablecer la contraseña de tu cuenta.</p>
+                    <p>Para continuar, por favor haz clic en el siguiente botón:</p>
+                    <p>
+                        <a href="{deep_link}" 
+                            style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; 
+                                    text-decoration: none; border-radius: 5px;">
+                            Restablecer contraseña
+                        </a>
+                    </p>
+                    <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+                    <p>¡Gracias por confiar en ReFit!</p>
+                </body>
             </html>
             """
 
