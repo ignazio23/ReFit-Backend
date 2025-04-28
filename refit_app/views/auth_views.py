@@ -210,10 +210,10 @@ class PasswordRecoveryView(APIView):
             recovery_token = uuid.uuid4().hex
 
             # Eliminar tokens anteriores
-            PasswordRecovery.objects.filter(fk_usuario=user).delete()
+            PasswordRecovery.objects.filter(user=user).delete()
 
             # Guardar nuevo token
-            PasswordRecovery.objects.create(fk_usuario=user, token=recovery_token)
+            PasswordRecovery.objects.create(user=user, token=recovery_token)
 
             # Construir deep link
             deep_link = f"refit://reset-password?token={recovery_token}"
@@ -251,7 +251,7 @@ class PasswordRecoveryView(APIView):
                 recovery.delete()
                 return Response({"error": "El token ha expirado."}, status=HTTP_400_BAD_REQUEST)
 
-            user = recovery.fk_usuario
+            user = recovery.user
 
             if user.email != email:
                 return Response({"error": "Email no coincide con el token."}, status=HTTP_400_BAD_REQUEST)
