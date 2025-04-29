@@ -243,7 +243,7 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id',  'image', 'name', 'steps')
+        fields = ('id', 'image', 'name', 'steps')
 
     def get_name(self, obj):
         """
@@ -251,7 +251,7 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
         """
         return f"{obj.nombre} {obj.apellidos}"
 
-    def get_profilePicture(self, obj):
+    def get_image(self, obj):
         request = self.context.get('request')
         if obj.image:
             nombre_logico = obj.image.nombre_logico
