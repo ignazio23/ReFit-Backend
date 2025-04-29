@@ -243,7 +243,7 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'image', 'name', 'steps')
+        fields = ('id',  'image', 'name', 'steps')
 
     def get_name(self, obj):
         """
@@ -252,12 +252,16 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
         return f"{obj.nombre} {obj.apellidos}"
 
     def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            nombre_logico = obj.image.nombre_logico
-            extension = obj.image.extension.strip('.') if obj.image.extension else 'jpg'
-            if nombre_logico:
-                return f"{request.scheme}://{request.get_host()}/media/public/{nombre_logico}.{extension}"
+        """
+        Devuelve la URL pública completa de la imagen de perfil del usuario.
+        """
+        request = self.context.get('request')  # para que la URL sea siempre completa
+        if obj.image and obj.image.nombre_logico:
+            filename = f"{obj.image.nombre_logico}{obj.image.extension}"
+            url = f"/media/public/{filename}"
+            if request is not None:
+                return request.build_absolute_uri(url)
+            return f"http://3.17.152.152{url}"
         return None
 
 # ------------------------------------------------------------------------------

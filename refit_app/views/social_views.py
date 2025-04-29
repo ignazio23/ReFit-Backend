@@ -101,12 +101,14 @@ class LeaderboardView(APIView):
 
     def get(self, request):
         top_users = User.objects.filter(is_staff=False).order_by('-pasos_totales')[:5]
-        serialized = LeaderBoardSerializer(top_users, many=True).data
+        serializer = LeaderBoardSerializer(top_users, many=True, context={'request': request})
 
-        for idx, user in enumerate(serialized, start=1):
-            user["ranking"] = idx  # Se agrega fuera del serializer
+        # Agregar campo de ranking manualmente
+        data = serializer.data
+        for idx, user in enumerate(data, start=1):
+            user["ranking"] = idx
 
-        return Response(serialized, status=HTTP_200_OK)
+        return Response(data, status=HTTP_200_OK)
     
 # --------------------------------------------------------------------------
 # Ranking del usuario autenticado
