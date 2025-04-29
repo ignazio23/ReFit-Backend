@@ -251,9 +251,13 @@ class LeaderBoardSerializer(serializers.ModelSerializer):
         """
         return f"{obj.nombre} {obj.apellidos}"
 
-    def get_image(self, obj):
+    def get_profilePicture(self, obj):
+        request = self.context.get('request')
         if obj.image:
-            return f"http://3.17.152.152/media/public/{obj.image.uuid}.{obj.image.extension.strip('.')}"
+            nombre_logico = obj.image.nombre_logico
+            extension = obj.image.extension.strip('.') if obj.image.extension else 'jpg'
+            if nombre_logico:
+                return f"{request.scheme}://{request.get_host()}/media/public/{nombre_logico}.{extension}"
         return None
 
 # ------------------------------------------------------------------------------
