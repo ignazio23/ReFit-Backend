@@ -4,6 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from django.shortcuts import get_object_or_404
+from django.core.files.base import ContentFile
+import uuid
+import os
+from django.core.files.storage import default_storage
 
 from refit_app.models import Producto, Categoria, ProductoCategoria, Canje, Imagen, ProductoImagen
 from refit_app.serializers import ProductSerializer, CategoriaSerializer
@@ -101,7 +105,7 @@ class CategoriaCreateView(APIView):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
     
 # --------------------------------------------------------------------------
-# Listado de productos y categorias disponibles
+# Listado de productos
 # --------------------------------------------------------------------------
 class ProductView(APIView):
     """
@@ -154,7 +158,7 @@ class CategoriaListView(APIView):
         return Response(data, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
-# Editar producto o categoria existente (Admin)
+# Editar producto existente (Admin)
 # --------------------------------------------------------------------------
 class ProductoEditView(APIView):
     """
@@ -224,6 +228,37 @@ class EditProductImageView(APIView):
     """
     permission_classes = [IsAdminUser]
 
+    def post(self, request, producto_id):
+        """
+        Carga una nueva imagen y la asigna a un producto.
+        Guarda la imagen en /media/public/assets/ con nombre product_{id}
+        """
+        archivo = request.FILES.get("image")
+        if not archivo:
+            return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
+
+        ext = os.path.splitext(archivo.name)[-1].lower()
+        if ext not in ['.jpg', '.jpeg', '.png']:
+            return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
+
+        producto = get_object_or_404(Producto, pk=producto_id)
+        img_uuid = str(uuid.uuid4())
+        filename = f"assets/product_{producto.pk_productos}{ext}"
+        ruta = os.path.join("public", filename)
+
+        default_storage.save(ruta, ContentFile(archivo.read()))
+
+        imagen = Imagen.objects.create(uuid=img_uuid, extension=ext, nombre_logico=f"product_{producto.pk_productos}")
+        producto.imagen_destacada = imagen
+        producto.save()
+
+        ProductoImagen.objects.get_or_create(fk_productos=producto, fk_imagenes=imagen)
+
+        return Response({
+            "message": "Imagen cargada y asignada correctamente.",
+            "imageUrl": f"{request.scheme}://{request.get_host()}/media/public/{filename}"
+        }, status=HTTP_200_OK)
+    
     def patch(self, request, producto_id):
         """
         Asocia una imagen a un producto existente.
@@ -318,6 +353,64 @@ class CategoriaEditView(APIView):
             return Response(serializer.data, status=HTTP_200_OK)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+# --------------------------------------------------------------------------
+# Asignación de imagen a categoria (Admin)
+# --------------------------------------------------------------------------
+class CategorieImageView(APIView):
+    """
+    Permite subir y/o asignar una imagen a una categoría.
+    - POST: Subir imagen y asignarla (multipart/form-data con "image")
+    - PATCH: Reasignar imagen existente (por imagen_id)
+    """
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, id_categoria):
+        """
+        Carga una nueva imagen y la asigna a la categoría.
+        Guarda la imagen en /media/public/assets/ con nombre estandarizado.
+        """
+        archivo = request.FILES.get("image")
+        if not archivo:
+            return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
+
+        ext = os.path.splitext(archivo.name)[-1].lower()
+        if ext not in ['.jpg', '.jpeg', '.png']:
+            return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
+
+        categoria = get_object_or_404(Categoria, pk=id_categoria)
+        img_uuid = str(uuid.uuid4())
+        filename = f"assets/categorie_{categoria.pk_categorias}{ext}"
+        ruta = os.path.join("public", filename)
+
+        default_storage.save(ruta, ContentFile(archivo.read()))
+
+        imagen = Imagen.objects.create(uuid=img_uuid, extension=ext, nombre_logico=f"categorie_{categoria.pk_categorias}")
+        categoria.imagen = imagen
+        categoria.save()
+
+        return Response({
+            "message": "Imagen cargada y asignada correctamente.",
+            "imageUrl": f"{request.scheme}://{request.get_host()}/media/public/{filename}"
+        }, status=HTTP_200_OK)
+
+    def patch(self, request, id_categoria):
+        """
+        Asigna una imagen existente a una categoría.
+        """
+        imagen_id = request.data.get("imagen_id")
+        if not imagen_id:
+            return Response({"error": "Debe proporcionar 'imagen_id'."}, status=HTTP_400_BAD_REQUEST)
+
+        categoria = get_object_or_404(Categoria, pk=id_categoria)
+        try:
+            imagen = Imagen.objects.get(pk_imagenes=imagen_id)
+        except Imagen.DoesNotExist:
+            return Response({"error": "Imagen no encontrada."}, status=HTTP_400_BAD_REQUEST)
+
+        categoria.imagen = imagen
+        categoria.save()
+        return Response({"message": "Imagen asignada a la categoría correctamente."}, status=HTTP_200_OK)
     
 # --------------------------------------------------------------------------
 # Canjeo de producto por monedas

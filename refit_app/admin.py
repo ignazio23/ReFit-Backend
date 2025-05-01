@@ -87,8 +87,9 @@ class ProductoAdmin(admin.ModelAdmin):
 # --------------------------------------------------------------------------
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
-    list_display = ("pk_categorias", "codigo", "nombre", "fecha_creacion")
-    search_fields = ("codigo", "nombre")
+    list_display = ("pk_categorias", "nombre", "codigo", "fecha_creacion")
+    search_fields = ("nombre", "codigo")
+    list_filter = ("fecha_creacion",)
     readonly_fields = ("fecha_creacion",)
 
 # --------------------------------------------------------------------------
@@ -96,9 +97,9 @@ class CategoriaAdmin(admin.ModelAdmin):
 # --------------------------------------------------------------------------
 @admin.register(ProductoImagen)
 class ProductoImagenAdmin(admin.ModelAdmin):
-    list_display = ("pk_productos_imagenes", "fk_productos", "fk_imagenes", "fecha_creacion")
-    readonly_fields = ("fecha_creacion",)
+    list_display = ("id", "fk_productos", "fk_imagenes", "fecha_creacion")
     list_select_related = ("fk_productos", "fk_imagenes")
+    readonly_fields = ("fecha_creacion",)
 
 # --------------------------------------------------------------------------
 # Administración de producto-categorías
