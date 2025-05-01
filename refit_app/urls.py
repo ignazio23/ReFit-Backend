@@ -13,7 +13,7 @@ from refit_app.views.profile_views import (
     UploadProfilePictureView, UserLastLoginView
 )
 from refit_app.views.product_views import (
-    ProductView, ExchangeProductView, CategoriaCreateView, EditProductImageView,
+    ProductView, ExchangeProductView, CategoriaCreateView, EditProductImageView, CategorieImageView,
     ProductoCreateView, CategoriaListView, CategoriaEditView, ProductoEditView
 )
 from refit_app.views.task_views import (
@@ -80,18 +80,21 @@ urlpatterns = [
 
     # Productos y Sistema de canje
     path("products/", include([
-        path("", ProductView.as_view(), name="product-list"),                                   # GET
-        path("redeem/", ExchangeProductView.as_view(), name="redeem-product"),                  # POST
-        path("new/", ProductoCreateView.as_view(), name="new_product"),                         # POST
-        path("edit/<int:id_producto>/", ProductoEditView.as_view(), name="edit_product"),       # PUT / PATCH
-        path("<int:producto_id>/image/", EditProductImageView.as_view(), name="product-image"), # PATCH
+        path("", ProductView.as_view(), name="product-list"),                                           # GET
+        path("redeem/", ExchangeProductView.as_view(), name="redeem-product"),                          # POST
+        path("new/", ProductoCreateView.as_view(), name="new_product"),                                 # POST
+        path("edit/<int:id_producto>/", ProductoEditView.as_view(), name="edit_product"),               # PUT / PATCH
+        path("<int:producto_id>/upload-image/", EditProductImageView.as_view(), name="product_image"),         # POST
+        path("<int:producto_id>/assign-image/", EditProductImageView.as_view(), name="edit_product_image"),    # PATCH
     ])),
 
     # Categorías
     path("categories/", include([
-        path("", CategoriaListView.as_view(), name="list_categories"),                          # GET
-        path("new/", CategoriaCreateView.as_view(), name="new_categorie"),                      # POST
-        path("edit/<int:id_categoria>/", CategoriaEditView.as_view(), name="edit_categorie"),   # PUT / PATCH
+        path("", CategoriaListView.as_view(), name="list_categories"),                                         # GET
+        path("new/", CategoriaCreateView.as_view(), name="new_categorie"),                                     # POST
+        path("edit/<int:id_categoria>/", CategoriaEditView.as_view(), name="edit_categorie"),                  # PUT / PATCH
+        path("upload-image/", CategorieImageView.as_view(), name="image_categorie"),                           # POST
+        path("<int:id_categoria>/assign-image/", CategorieImageView.as_view(), name="edit_image_categorie"),   # PATCH
     ])),
 
     # Social / Ranking
