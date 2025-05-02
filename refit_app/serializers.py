@@ -381,6 +381,7 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     Serializador para la visualización de productos.
     """
+    code = serializers.CharField(source='codigo')
     name = serializers.CharField(source='nombre')
     description = serializers.CharField(source='descripcion')
     price = serializers.IntegerField(source='precio_monedas')
@@ -391,7 +392,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Producto
         fields = [
-            'id', 'name', 'description', 'price',
+            'id', 'code', 'name', 'description', 'price',
             'featured', 'imageUrl', 'featuredImageUrl'
         ]
 
