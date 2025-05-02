@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.db import transaction
+from django.db.models import Sum
 from datetime import datetime, date
 from django.utils import timezone
 import logging
@@ -17,6 +18,21 @@ logger = logging.getLogger(__name__)
 # Idioma: Código en inglés / Comentarios en español
 # Autor: Ignacio da Rosa – MVP 1 – 2025/04/02
 # Descripción: Vistas API relacionadas con el conteo de pasos diarios.
+# =====================================================================
+# ---------------------------------------------------------------------------
+# Funciones auxiliares
+# ---------------------------------------------------------------------------
+def calcular_pasos_mensuales(usuario):
+    """
+    Calcula la suma de pasos del mes actual para el usuario.
+    """
+    hoy = timezone.now().date()
+    inicio_mes = hoy.replace(day=1)
+    return Pasos.objects.filter(
+        fk_usuarios=usuario,
+        fecha__range=(inicio_mes, hoy)
+    ).aggregate(total=Sum('pasos'))['total'] or 0
+
 # --------------------------------------------------------------------------
 # Registro y consulta de pasos diarios
 # --------------------------------------------------------------------------
@@ -31,7 +47,7 @@ class StepUpdateView(APIView):
     def get(self, request):
         """
         Consulta los pasos del día actual para el usuario autenticado.
-        Devuelve pasos actuales, totales y monedas.
+        Devuelve pasos actuales, totales, del mes y monedas.
         """
         hoy = date.today()
         step_obj = Pasos.objects.filter(fk_usuarios=request.user, fecha=hoy).first()
@@ -40,6 +56,7 @@ class StepUpdateView(APIView):
         return Response({
             "stepsToday": pasos,
             "totalSteps": request.user.pasos_totales,
+            "monthlySteps": calcular_pasos_mensuales(request.user),
             "coins": request.user.monedas_actuales
         }, status=HTTP_200_OK)
 
@@ -90,7 +107,11 @@ class StepUpdateView(APIView):
                 request.user.last_sync = timezone.now()
                 request.user.save()
 
-            return Response({"detail": "Pasos actualizados correctamente."}, status=HTTP_200_OK)
+            return Response({
+                "detail": "Pasos actualizados correctamente.",
+                "totalSteps": request.user.pasos_totales,
+                "monthlySteps": calcular_pasos_mensuales(request.user)
+            }, status=HTTP_200_OK)
 
         # Fallback a la lógica anterior (formato antiguo)
         nuevos_pasos = data.get("pasos")
@@ -125,9 +146,10 @@ class StepUpdateView(APIView):
             request.user.save()
 
         logger.info("%s agregó %s pasos (x%.1f). Monedas: +%s", request.user.email, nuevos_pasos, multiplicador, monedas_adicionales)
-
+        
         return Response({
             "stepsToday": step_obj.pasos,
             "totalSteps": request.user.pasos_totales,
+            "monthlySteps": calcular_pasos_mensuales(request.user),
             "coins": request.user.monedas_actuales
         }, status=HTTP_200_OK) 
