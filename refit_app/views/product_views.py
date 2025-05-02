@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 import uuid
 import os
 from django.core.files.storage import default_storage
+from django.conf import settings
 
 from refit_app.models import Producto, Categoria, ProductoCategoria, Canje, Imagen, ProductoImagen
 from refit_app.serializers import ProductSerializer, CategoriaSerializer
@@ -228,35 +229,37 @@ class EditProductImageView(APIView):
     """
     permission_classes = [IsAdminUser]
 
-    def post(self, request, producto_id):
-        """
-        Carga una nueva imagen y la asigna a un producto.
-        Guarda la imagen en /media/public/assets/ con nombre product_{id}
-        """
+    def post(self, request):
+        producto_id = request.data.get("producto_id")
         archivo = request.FILES.get("image")
-        if not archivo:
-            return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
+
+        if not producto_id or not archivo:
+            return Response({"error": "Se requiere 'producto_id' e imagen."}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            producto = Producto.objects.get(pk_productos=producto_id)
+        except Producto.DoesNotExist:
+            return Response({"error": "Producto no encontrado."}, status=HTTP_400_BAD_REQUEST)
 
         ext = os.path.splitext(archivo.name)[-1].lower()
         if ext not in ['.jpg', '.jpeg', '.png']:
-            return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
+            return Response({"error": "Formato inválido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
-        producto = get_object_or_404(Producto, pk=producto_id)
-        img_uuid = str(uuid.uuid4())
-        filename = f"assets/product_{producto.pk_productos}{ext}"
-        ruta = os.path.join("public", filename)
+        # Guardar imagen con nombre lógico
+        filename = f"assets/product_{producto_id}{ext}"
+        ruta_publica = os.path.join("public", filename)
+        default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        default_storage.save(ruta, ContentFile(archivo.read()))
-
-        imagen = Imagen.objects.create(uuid=img_uuid, extension=ext, nombre_logico=f"product_{producto.pk_productos}")
+        # Crear y asignar imagen en la base
+        imagen = Imagen.objects.create(uuid=uuid.uuid4(), extension=ext, nombre_logico=f"product_{producto_id}")
         producto.imagen_destacada = imagen
         producto.save()
 
         ProductoImagen.objects.get_or_create(fk_productos=producto, fk_imagenes=imagen)
 
         return Response({
-            "message": "Imagen cargada y asignada correctamente.",
-            "imageUrl": f"{request.scheme}://{request.get_host()}/media/public/{filename}"
+            "message": "Imagen subida y asignada correctamente al producto.",
+            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
     
     def patch(self, request, producto_id):
@@ -365,33 +368,35 @@ class CategorieImageView(APIView):
     """
     permission_classes = [IsAdminUser]
 
-    def post(self, request, id_categoria):
-        """
-        Carga una nueva imagen y la asigna a la categoría.
-        Guarda la imagen en /media/public/assets/ con nombre estandarizado.
-        """
+    def post(self, request):
+        categoria_id = request.data.get("categoria_id")
         archivo = request.FILES.get("image")
-        if not archivo:
-            return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
+
+        if not categoria_id or not archivo:
+            return Response({"error": "Se requiere 'categoria_id' e imagen."}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            categoria = Categoria.objects.get(pk_categorias=categoria_id)
+        except Categoria.DoesNotExist:
+            return Response({"error": "Categoría no encontrada."}, status=HTTP_400_BAD_REQUEST)
 
         ext = os.path.splitext(archivo.name)[-1].lower()
         if ext not in ['.jpg', '.jpeg', '.png']:
-            return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
+            return Response({"error": "Formato inválido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
-        categoria = get_object_or_404(Categoria, pk=id_categoria)
-        img_uuid = str(uuid.uuid4())
-        filename = f"assets/categorie_{categoria.pk_categorias}{ext}"
-        ruta = os.path.join("public", filename)
+        # Guardar imagen con nombre lógico
+        filename = f"assets/categorie_{categoria_id}{ext}"
+        ruta_publica = os.path.join("public", filename)
+        default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        default_storage.save(ruta, ContentFile(archivo.read()))
-
-        imagen = Imagen.objects.create(uuid=img_uuid, extension=ext, nombre_logico=f"categorie_{categoria.pk_categorias}")
+        # Crear y asignar imagen en la base
+        imagen = Imagen.objects.create(uuid=uuid.uuid4(), extension=ext, nombre_logico=f"categorie_{categoria_id}")
         categoria.imagen = imagen
         categoria.save()
 
         return Response({
-            "message": "Imagen cargada y asignada correctamente.",
-            "imageUrl": f"{request.scheme}://{request.get_host()}/media/public/{filename}"
+            "message": "Imagen subida y asignada correctamente a la categoría.",
+            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
 
     def patch(self, request, id_categoria):
