@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from django.db import transaction
 from datetime import datetime, date
-from django.utils import timezone, now
+from django.utils import timezone
 import logging
 
 from refit_app.models import Pasos
@@ -87,7 +87,7 @@ class StepUpdateView(APIView):
                     step_obj.save()
 
                 # Actualizar sincronización
-                request.user.last_sync = now()
+                request.user.last_sync = timezone.now()
                 request.user.save()
 
             return Response({"detail": "Pasos actualizados correctamente."}, status=HTTP_200_OK)
@@ -121,7 +121,7 @@ class StepUpdateView(APIView):
 
             request.user.pasos_totales += nuevos_pasos
             request.user.monedas_actuales += monedas_adicionales
-            request.user.last_sync = now()
+            request.user.last_sync = timezone.now()
             request.user.save()
 
         logger.info("%s agregó %s pasos (x%.1f). Monedas: +%s", request.user.email, nuevos_pasos, multiplicador, monedas_adicionales)
