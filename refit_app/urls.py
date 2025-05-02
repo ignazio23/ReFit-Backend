@@ -84,7 +84,7 @@ urlpatterns = [
         path("redeem/", ExchangeProductView.as_view(), name="redeem-product"),                                  # POST
         path("new/", ProductoCreateView.as_view(), name="new_product"),                                         # POST
         path("edit/<int:id_producto>/", ProductoEditView.as_view(), name="edit_product"),                       # PUT / PATCH
-        path("/upload-image/", EditProductImageView.as_view(), name="product_image"),                           # POST
+        path("upload-image/", EditProductImageView.as_view(), name="product_image"),                           # POST
         path("<int:producto_id>/assign-image/", EditProductImageView.as_view(), name="edit_product_image"),     # PATCH
     ])),
 
