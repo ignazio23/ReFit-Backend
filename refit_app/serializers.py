@@ -177,9 +177,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         return obj.fk_usuario_referente is not None
     
     def get_lastSync(self, obj):
-        if obj.last_sync:
-            return obj.last_sync.strftime("%Y-%m-%d %H:%M:%S")
-        return None
+        return obj.last_sync.isoformat() if obj.last_sync else None
 
 # ------------------------------------------------------------------------------
 # Perfil del Usuario (para ediciones y detalles)
@@ -236,9 +234,7 @@ class UserSerializer(serializers.ModelSerializer):
             return None
         
     def get_lastSync(self, obj):
-        if obj.last_sync:
-            return obj.last_sync.strftime("%Y-%m-%d %H:%M:%S")
-        return None
+        return obj.last_sync.isoformat() if obj.last_sync else None
 
 # ------------------------------------------------------------------------------
 # Leaderboard

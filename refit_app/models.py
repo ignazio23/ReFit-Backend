@@ -83,7 +83,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_login = models.BooleanField(default=True)  # Campo agregado para marcar el primer inicio de sesión
     last_login = models.DateTimeField(null=True, blank=True)
 
-    last_sync = models.DateTimeField(null=True, blank=True, verbose_name="Última sincronización")
+    last_sync = models.DateTimeField(default=timezone.now, verbose_name="Última sincronización")
 
     blocked = models.BooleanField(default=False)
     lock_date = models.DateTimeField(null=True, blank=True)
