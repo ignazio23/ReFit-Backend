@@ -137,12 +137,13 @@ class LoginResponseSerializer(serializers.ModelSerializer):
     dailyGoal = serializers.IntegerField(source='objetivo_diario')
     leaderBoardPosition = serializers.SerializerMethodField()
     monthlySteps = serializers.IntegerField(source='pasos_totales')
+    lastSync = serializers.DateTimeField(source='last_sync', format="%Y-%m-%d %H:%M:%S", required=False)
 
     class Meta:
         model = User
         fields = (
             'id', 'name', 'surname', 'email', 'coins', 'dailySteps', 'dailyGoal',
-            'monthlySteps', 'leaderBoardPosition', 'firstLogin', 'profilePicture',
+            'monthlySteps', 'leaderBoardPosition', 'firstLogin', 'profilePicture', 'lastSync',
             'lastLogin', 'updatePassword', 'referralCode', 'referred', 'birthDate', 'gender'
         )
     
@@ -193,13 +194,14 @@ class UserSerializer(serializers.ModelSerializer):
     dailyGoal = serializers.IntegerField(source='objetivo_diario')
     leaderBoardPosition = serializers.SerializerMethodField()
     monthlySteps = serializers.IntegerField(source='pasos_totales')
+    lastSync = serializers.DateTimeField(source='last_sync', format="%Y-%m-%d %H:%M:%S", required=False)
 
     class Meta:
         model = User
         fields = (
             'id', 'email', 'name', 'surname', 'birthDate', 'gender', 'referralCode',
             'profilePicture', 'coins', 'dailySteps', 'dailyGoal', 
-            'leaderBoardPosition', 'monthlySteps'
+            'leaderBoardPosition', 'monthlySteps' , 'lastSync'
             )
 
     def get_profilePicture(self, obj):
