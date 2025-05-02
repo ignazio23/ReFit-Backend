@@ -48,6 +48,26 @@ class ReferredUsersView(APIView):
         data = ReferredUserSerializer(referidos, many=True).data
         logger.info("User %s requested referred users.", request.user.email)
         return Response(data, status=HTTP_200_OK)
+    
+    def post(self, request):
+        referral_code = request.data.get("code")
+
+        if not referral_code:
+            return Response({"error": "Debe enviar el código del referente."}, status=HTTP_400_BAD_REQUEST)
+
+        if request.user.fk_usuario_referente is not None:
+            return Response({"error": "Ya tiene un usuario referente asignado."}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            referente = User.objects.get(codigo_referido=referral_code, is_active=True)
+        except User.DoesNotExist:
+            return Response({"error": "El código de referido no es válido."}, status=HTTP_400_BAD_REQUEST)
+
+        request.user.fk_usuario_referente = referente
+        request.user.save()
+
+        logger.info("Usuario %s asignó como referente a %s", request.user.email, referente.email)
+        return Response({"message": "Usuario referente asignado correctamente."}, status=HTTP_200_OK)
 
 # ----------------------------------------------------------------------------
 # PARÁMETROS DE RECOMPENSA

@@ -415,8 +415,8 @@ class ProductSerializer(serializers.ModelSerializer):
         """
         Retorna la URL de la imagen destacada asociada directamente al producto.
         """
-        if obj.imagen_destacada:
-            return f"http://3.17.152.152/media/public/{obj.imagen_destacada.uuid}.{obj.imagen_destacada.extension.strip('.')}"
+        if obj.imagen_destacada and obj.imagen_destacada.nombre_logico and obj.imagen_destacada.extension:
+            return f"http://3.17.152.152/media/public/assets/{obj.imagen_destacada.nombre_logico}{obj.imagen_destacada.extension}"
         return None
     
     def get_categoria(self, obj):
@@ -442,8 +442,8 @@ class CategoriaSerializer(serializers.ModelSerializer):
         fields = ('id', 'code', 'name', 'imageUrl')
     
     def get_imageUrl(self, obj):
-        if obj.imagen:
-            return f"http://3.17.152.152/media/public/{obj.imagen.uuid}.{obj.imagen.extension.strip('.')}"
+        if obj.imagen and obj.imagen.nombre_logico and obj.imagen.extension:
+            return f"http://3.17.152.152/media/public/assets/{obj.imagen.nombre_logico}{obj.imagen.extension}"
         return None
 
 # ----------------------------------------------------------------------------
