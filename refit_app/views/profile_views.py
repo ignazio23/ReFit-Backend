@@ -113,26 +113,24 @@ class UploadProfilePictureView(APIView):
         if ext not in ['.jpg', '.jpeg', '.png']:
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
-        # Nombre lógico
+        # Nombre lógico y ruta
         nombre_logico = f"{request.user.id}_profile"
         filename = f"{nombre_logico}{ext}"
         ruta_publica = os.path.join("public", filename)
 
-        # Guardar archivo físico
+        # Guardar imagen físicamente
         default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        # Crear nueva imagen
+        # Desactivar lógicamente imágenes anteriores del mismo usuario (si existen)
+        Imagen.objects.filter(nombre_logico=nombre_logico).update(nombre_logico=None)
+
+        # Crear nueva imagen y asignar
         nueva_imagen = Imagen.objects.create(
             uuid=uuid.uuid4(),
             extension=ext,
             nombre_logico=nombre_logico
         )
 
-        # Eliminar nombre_logico de imágenes anteriores del mismo usuario (si existen)
-        if request.user.image_id:
-            Imagen.objects.filter(pk__in=[img.pk for img in Imagen.objects.filter(nombre_logico__icontains=f"{request.user.id}_profile").exclude(pk=nueva_imagen.pk)]).update(nombre_logico=None)
-
-        # Asignar imagen nueva
         request.user.image = nueva_imagen
         request.user.save()
 
@@ -140,6 +138,7 @@ class UploadProfilePictureView(APIView):
             "message": "Imagen de perfil subida y asignada correctamente.",
             "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
+
 
 # --------------------------------------------------------------------------
 # Edición de datos y objetivo diario - Se unifica en UserDetailView
