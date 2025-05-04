@@ -144,7 +144,7 @@ class UploadProfilePictureView(APIView):
 
         return Response({
             "message": "Imagen de perfil actualizada correctamente.",
-            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
+            "imageUrl": f"http://3.17.152.152/media/public/{filename}?v={nueva_imagen.uuid}"
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
