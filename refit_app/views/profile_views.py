@@ -128,7 +128,9 @@ class UploadProfilePictureView(APIView):
             Imagen.objects.filter(pk=request.user.image_id).delete()
 
         # Guardar archivo nuevo en la misma ruta
-        default_storage.save(ruta_relativa, ContentFile(archivo.read()))
+        with open(ruta_absoluta, "wb+") as destination:
+            for chunk in archivo.chunks():
+                destination.write(chunk)
 
         # Crear nueva entrada en la tabla IMAGENES
         nueva_imagen = Imagen.objects.create(
