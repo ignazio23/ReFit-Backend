@@ -117,8 +117,8 @@ class UploadProfilePictureView(APIView):
         user_id = request.user.id
         nombre_logico = f"{user_id}_profile"
         filename = f"{nombre_logico}{ext}"
-        ruta_relativa = os.path.join("public", filename)
-        ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_relativa)
+        #ruta_relativa = os.path.join("public", filename)
+        ruta_absoluta = "http://3.17.152.152/media/public/"
 
         # Borrar imagen física anterior si existe
         if os.path.exists(ruta_absoluta):
@@ -129,7 +129,7 @@ class UploadProfilePictureView(APIView):
             Imagen.objects.filter(pk=request.user.image_id).delete()
 
         # Guardar nuevo archivo
-        default_storage.save(ruta_relativa, ContentFile(archivo.read()))
+        default_storage.save(ruta_absoluta, ContentFile(archivo.read()))
 
         # Crear nuevo registro en la base
         nueva_imagen = Imagen.objects.create(
@@ -143,7 +143,7 @@ class UploadProfilePictureView(APIView):
         request.user.save()
 
         # Usar MEDIA_URL como base para generar la URL final
-        image_url = f"{settings.MEDIA_URL}/media/public/{filename}".replace('//', '/').replace(':/', '://')
+        image_url = f"http://3.17.152.152/media/public/{filename}".replace('//', '/').replace(':/', '://')
 
         return Response({
             "message": "Imagen de perfil actualizada correctamente.",
