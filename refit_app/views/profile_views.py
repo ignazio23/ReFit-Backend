@@ -98,7 +98,8 @@ class UserDetailView(APIView):
 class UploadProfilePictureView(APIView):
     """
     Permite subir una imagen de perfil directamente desde la app (multipart/form-data).
-    Guarda el archivo y lo asigna al perfil del usuario autenticado.
+    Guarda el archivo en /media/public/ y la asigna al perfil del usuario autenticado.
+    Si hay imágenes anteriores, las elimina lógicamente o físicamente.
     """
     permission_classes = [IsAuthenticated]
 
@@ -111,24 +112,28 @@ class UploadProfilePictureView(APIView):
         ext = os.path.splitext(archivo.name)[-1].lower()
         if ext not in ['.jpg', '.jpeg', '.png']:
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
-        
+
         # Nombre lógico
         nombre_logico = f"{request.user.id}_profile"
-
-        # Guardar en /media/public/
         filename = f"{nombre_logico}{ext}"
         ruta_publica = os.path.join("public", filename)
+
+        # Guardar archivo físico
         default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        # Crear registro en IMAGENES
-        imagen = Imagen.objects.create(
-            uuid=uuid.uuid4(),  # Seguimos usando uuid
+        # Crear nueva imagen
+        nueva_imagen = Imagen.objects.create(
+            uuid=uuid.uuid4(),
             extension=ext,
             nombre_logico=nombre_logico
         )
 
-        # Asignar imagen al usuario
-        request.user.image = imagen
+        # Eliminar nombre_logico de imágenes anteriores del mismo usuario (si existen)
+        if request.user.image_id:
+            Imagen.objects.filter(pk__in=[img.pk for img in Imagen.objects.filter(nombre_logico__icontains=f"{request.user.id}_profile").exclude(pk=nueva_imagen.pk)]).update(nombre_logico=None)
+
+        # Asignar imagen nueva
+        request.user.image = nueva_imagen
         request.user.save()
 
         return Response({
