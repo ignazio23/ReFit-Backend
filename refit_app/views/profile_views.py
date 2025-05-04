@@ -106,48 +106,45 @@ class UploadProfilePictureView(APIView):
 
     def patch(self, request):
         archivo = request.FILES.get("image")
-
         if not archivo:
             return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
 
         ext = os.path.splitext(archivo.name)[-1].lower()
-        if ext not in ['.jpg', '.jpeg', '.png']:
+        if ext not in [".jpg", ".jpeg", ".png"]:
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
         user_id = request.user.id
         nombre_logico = f"{user_id}_profile"
         filename = f"{nombre_logico}{ext}"
-        #ruta_relativa = os.path.join("public", filename)
-        ruta_absoluta = "http://3.17.152.152/media/public/"
+        ruta_relativa = os.path.join("public", filename)
+        ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_relativa)
 
-        # Borrar imagen física anterior si existe
+        # Borrar archivo físico anterior (si existe)
         if os.path.exists(ruta_absoluta):
             os.remove(ruta_absoluta)
 
-        # Borrar imagen anterior de la base de datos
+        # Borrar imagen anterior en base de datos
         if request.user.image_id:
             Imagen.objects.filter(pk=request.user.image_id).delete()
 
-        # Guardar nuevo archivo
-        default_storage.save(ruta_absoluta, ContentFile(archivo.read()))
+        # Guardar archivo nuevo en la misma ruta
+        default_storage.save(ruta_relativa, ContentFile(archivo.read()))
 
-        # Crear nuevo registro en la base
+        # Crear nueva entrada en la tabla IMAGENES
         nueva_imagen = Imagen.objects.create(
             uuid=uuid.uuid4(),
             extension=ext,
             nombre_logico=nombre_logico
         )
 
-        # Asignar imagen al usuario
+        # Asignar al usuario
         request.user.image = nueva_imagen
         request.user.save()
 
-        # Usar MEDIA_URL como base para generar la URL final
-        image_url = f"http://3.17.152.152/media/public/{filename}".replace('//', '/').replace(':/', '://')
-
+        # Forzar caché-busting agregando UUID en la URL (sin cambiar nombre lógico en disco)
         return Response({
             "message": "Imagen de perfil actualizada correctamente.",
-            "imageUrl": image_url
+            "imageUrl": f"http://3.17.152.152/media/public/{filename}?v={nueva_imagen.uuid}"
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
