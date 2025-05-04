@@ -106,7 +106,6 @@ class UploadProfilePictureView(APIView):
 
     def patch(self, request):
         archivo = request.FILES.get("image")
-
         if not archivo:
             return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
 
@@ -114,35 +113,36 @@ class UploadProfilePictureView(APIView):
         if ext not in ['.jpg', '.jpeg', '.png']:
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
-        # Definir nombre lógico y ruta del archivo
-        nombre_logico = f"{request.user.id}_profile"
+        user_id = request.user.id
+        nombre_logico = f"{user_id}_profile"
         filename = f"{nombre_logico}{ext}"
         ruta_publica = os.path.join("public", filename)
-        ruta_completa = os.path.join(settings.MEDIA_ROOT, ruta_publica)
+        ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_publica)
 
-        # Eliminar archivo anterior físicamente si existe
-        if default_storage.exists(ruta_publica):
-            default_storage.delete(ruta_publica)
+        # Eliminar archivo anterior si existe
+        if os.path.exists(ruta_absoluta):
+            os.remove(ruta_absoluta)
 
-        # Guardar archivo con nombre fijo (sin sufijos automáticos)
+        # Eliminar registro anterior en la base de datos
+        if request.user.image_id:
+            Imagen.objects.filter(pk=request.user.image_id).delete()
+
+        # Guardar nueva imagen en la misma ruta
         default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        # Eliminar nombre_logico de otras imágenes del mismo usuario
-        Imagen.objects.filter(nombre_logico=nombre_logico).update(nombre_logico=None)
-
-        # Crear nueva imagen en la BD
+        # Crear nuevo registro Imagen
         nueva_imagen = Imagen.objects.create(
             uuid=uuid.uuid4(),
             extension=ext,
             nombre_logico=nombre_logico
         )
 
-        # Asignar imagen al usuario
+        # 🔗 Asignar imagen al usuario
         request.user.image = nueva_imagen
         request.user.save()
 
         return Response({
-            "message": "Imagen de perfil subida y asignada correctamente.",
+            "message": "Imagen de perfil actualizada correctamente.",
             "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
 
