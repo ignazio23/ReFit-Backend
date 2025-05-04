@@ -117,34 +117,37 @@ class UploadProfilePictureView(APIView):
         user_id = request.user.id
         nombre_logico = f"{user_id}_profile"
         filename = f"{nombre_logico}{ext}"
-        ruta_publica = os.path.join("public", filename)
-        ruta_completa = os.path.join(settings.MEDIA_ROOT, ruta_publica)
+        ruta_relativa = os.path.join("public", filename)
+        ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_relativa)
 
-        # Borrar archivo físico anterior (si existe)
-        if os.path.exists(ruta_completa):
-            os.remove(ruta_completa)
+        # Borrar imagen física anterior si existe
+        if os.path.exists(ruta_absoluta):
+            os.remove(ruta_absoluta)
 
-        # Borrar registro anterior en la tabla IMAGENES (si existe)
+        # Borrar imagen anterior de la base de datos
         if request.user.image_id:
             Imagen.objects.filter(pk=request.user.image_id).delete()
 
-        # Guardar nuevo archivo con mismo nombre fijo
-        default_storage.save(ruta_publica, ContentFile(archivo.read()))
+        # Guardar nuevo archivo
+        default_storage.save(ruta_relativa, ContentFile(archivo.read()))
 
-        # Crear nuevo registro Imagen
+        # Crear nuevo registro en la base
         nueva_imagen = Imagen.objects.create(
             uuid=uuid.uuid4(),
             extension=ext,
             nombre_logico=nombre_logico
         )
 
-        # Asignar nueva imagen al usuario
+        # Asignar imagen al usuario
         request.user.image = nueva_imagen
         request.user.save()
 
+        # Usar MEDIA_URL como base para generar la URL final
+        image_url = f"{settings.MEDIA_URL}/media/public/{filename}".replace('//', '/').replace(':/', '://')
+
         return Response({
             "message": "Imagen de perfil actualizada correctamente.",
-            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
+            "imageUrl": image_url
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
