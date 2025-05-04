@@ -70,6 +70,7 @@ class StepUpdateView(APIView):
         data = request.data
 
         if isinstance(data, list):
+            total_nuevos_pasos = 0  # Acumula pasos nuevos reales (netos)
             with transaction.atomic():
                 for item in data:
                     action = item.get("action")
@@ -96,60 +97,28 @@ class StepUpdateView(APIView):
 
                     if action == "add":
                         step_obj.pasos += steps
+                        total_nuevos_pasos += steps
                         request.user.pasos_totales += steps
                     elif action == "replace":
-                        request.user.pasos_totales += (steps - step_obj.pasos)
+                        diferencia = steps - step_obj.pasos
                         step_obj.pasos = steps
+                        total_nuevos_pasos += max(diferencia, 0)
+                        request.user.pasos_totales += diferencia
 
                     step_obj.save()
 
-                # Actualizar sincronización
+                multiplicador = calcular_multiplicador(request.user)
+                monedas_adicionales = int((total_nuevos_pasos * multiplicador) // 200)
+                request.user.monedas_actuales += monedas_adicionales
                 request.user.last_sync = timezone.now()
                 request.user.save()
+
+            logger.info("%s agregó %s pasos (x%.1f). Monedas: +%s", request.user.email, total_nuevos_pasos, multiplicador, monedas_adicionales)
 
             return Response({
                 "detail": "Pasos actualizados correctamente.",
                 "totalSteps": request.user.pasos_totales,
-                "monthlySteps": calcular_pasos_mensuales(request.user)
+                "monthlySteps": calcular_pasos_mensuales(request.user),
+                "coins": request.user.monedas_actuales
             }, status=HTTP_200_OK)
 
-        # Fallback a la lógica anterior (formato antiguo)
-        nuevos_pasos = data.get("pasos")
-
-        if not isinstance(nuevos_pasos, int):
-            try:
-                nuevos_pasos = int(nuevos_pasos)
-            except (ValueError, TypeError):
-                return Response({"error": "Los pasos deben ser un número entero."}, status=HTTP_400_BAD_REQUEST)
-
-        if nuevos_pasos < 0:
-            return Response({"error": "No se permiten pasos negativos."}, status=HTTP_400_BAD_REQUEST)
-
-        hoy = date.today()
-
-        with transaction.atomic():
-            step_obj, _ = Pasos.objects.select_for_update().get_or_create(
-                fk_usuarios=request.user,
-                fecha=hoy,
-                defaults={"pasos": 0}
-            )
-
-            step_obj.pasos += nuevos_pasos
-            step_obj.save()
-
-            multiplicador = calcular_multiplicador(request.user)
-            monedas_adicionales = int((nuevos_pasos * multiplicador) // 200)
-
-            request.user.pasos_totales += nuevos_pasos
-            request.user.monedas_actuales += monedas_adicionales
-            request.user.last_sync = timezone.now()
-            request.user.save()
-
-        logger.info("%s agregó %s pasos (x%.1f). Monedas: +%s", request.user.email, nuevos_pasos, multiplicador, monedas_adicionales)
-        
-        return Response({
-            "stepsToday": step_obj.pasos,
-            "totalSteps": request.user.pasos_totales,
-            "monthlySteps": calcular_pasos_mensuales(request.user),
-            "coins": request.user.monedas_actuales
-        }, status=HTTP_200_OK) 
