@@ -152,8 +152,9 @@ class LoginResponseSerializer(serializers.ModelSerializer):
         if obj.image:
             nombre_logico = obj.image.nombre_logico
             extension = obj.image.extension.strip('.') if obj.image.extension else 'jpg'
+            uuid_str = str(obj.image.uuid) if obj.image.uuid else ''
             if nombre_logico:
-                return f"http://3.17.152.152/media/public/{nombre_logico}.{extension}"
+                return f"http://3.17.152.152/media/public/{nombre_logico}.{extension}?v={uuid_str}"
         return None
 
     def get_dailySteps(self, obj):
@@ -212,9 +213,11 @@ class UserSerializer(serializers.ModelSerializer):
         if obj.image:
             nombre_logico = obj.image.nombre_logico
             extension = obj.image.extension.strip('.') if obj.image.extension else 'jpg'
+            uuid_str = str(obj.image.uuid) if obj.image.uuid else ''
             if nombre_logico:
-                return f"http://3.17.152.152/media/public/{nombre_logico}.{extension}"
+                return f"http://3.17.152.152/media/public/{nombre_logico}.{extension}?v={uuid_str}"
         return None
+
     
     def get_dailySteps(self, obj):
         """
