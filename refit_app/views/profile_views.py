@@ -10,6 +10,7 @@ import os
 from django.db.models import Q
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.conf import settings
 
 from refit_app.serializers import (
     EditDailyObjetiveSerializer,
@@ -113,24 +114,30 @@ class UploadProfilePictureView(APIView):
         if ext not in ['.jpg', '.jpeg', '.png']:
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
-        # Nombre lógico y ruta
+        # Definir nombre lógico y ruta del archivo
         nombre_logico = f"{request.user.id}_profile"
         filename = f"{nombre_logico}{ext}"
         ruta_publica = os.path.join("public", filename)
+        ruta_completa = os.path.join(settings.MEDIA_ROOT, ruta_publica)
 
-        # Guardar imagen físicamente
+        # Eliminar archivo anterior físicamente si existe
+        if default_storage.exists(ruta_publica):
+            default_storage.delete(ruta_publica)
+
+        # Guardar archivo con nombre fijo (sin sufijos automáticos)
         default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        # Desactivar lógicamente imágenes anteriores del mismo usuario (si existen)
+        # Eliminar nombre_logico de otras imágenes del mismo usuario
         Imagen.objects.filter(nombre_logico=nombre_logico).update(nombre_logico=None)
 
-        # Crear nueva imagen y asignar
+        # Crear nueva imagen en la BD
         nueva_imagen = Imagen.objects.create(
             uuid=uuid.uuid4(),
             extension=ext,
             nombre_logico=nombre_logico
         )
 
+        # Asignar imagen al usuario
         request.user.image = nueva_imagen
         request.user.save()
 
@@ -138,7 +145,6 @@ class UploadProfilePictureView(APIView):
             "message": "Imagen de perfil subida y asignada correctamente.",
             "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
-
 
 # --------------------------------------------------------------------------
 # Edición de datos y objetivo diario - Se unifica en UserDetailView
