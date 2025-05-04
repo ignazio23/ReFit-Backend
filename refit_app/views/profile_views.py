@@ -106,47 +106,45 @@ class UploadProfilePictureView(APIView):
 
     def patch(self, request):
         archivo = request.FILES.get("image")
+
         if not archivo:
             return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
 
         ext = os.path.splitext(archivo.name)[-1].lower()
-        if ext not in [".jpg", ".jpeg", ".png"]:
+        if ext not in ['.jpg', '.jpeg', '.png']:
             return Response({"error": "Formato no permitido. Solo JPG o PNG."}, status=HTTP_400_BAD_REQUEST)
 
         user_id = request.user.id
         nombre_logico = f"{user_id}_profile"
         filename = f"{nombre_logico}{ext}"
-        ruta_relativa = os.path.join("public", filename)
-        ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_relativa)
+        ruta_publica = os.path.join("public", filename)
+        ruta_completa = os.path.join(settings.MEDIA_ROOT, ruta_publica)
 
-        # Borrar archivo físico anterior (si existe)
-        if os.path.exists(ruta_absoluta):
-            os.remove(ruta_absoluta)
+        # Borrar archivo anterior (si existe)
+        if os.path.exists(ruta_completa):
+            os.remove(ruta_completa)
 
-        # Borrar imagen anterior en base de datos
+        # Borrar registro anterior en BD (si existe)
         if request.user.image_id:
             Imagen.objects.filter(pk=request.user.image_id).delete()
 
-        # Guardar archivo nuevo en la misma ruta
-        with open(ruta_absoluta, "wb+") as destination:
-            for chunk in archivo.chunks():
-                destination.write(chunk)
+        # Guardar nuevo archivo
+        default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
-        # Crear nueva entrada en la tabla IMAGENES
+        # Crear nuevo registro en IMAGENES
         nueva_imagen = Imagen.objects.create(
             uuid=uuid.uuid4(),
             extension=ext,
             nombre_logico=nombre_logico
         )
 
-        # Asignar al usuario
+        # Asignar nueva imagen al usuario
         request.user.image = nueva_imagen
         request.user.save()
 
-        # Forzar caché-busting agregando UUID en la URL (sin cambiar nombre lógico en disco)
         return Response({
             "message": "Imagen de perfil actualizada correctamente.",
-            "imageUrl": f"http://3.17.152.152/media/public/{filename}?v={nueva_imagen.uuid}"
+            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
