@@ -55,7 +55,7 @@ class UserDetailView(APIView):
         if serializer.is_valid():
             serializer.save()
             logger.info("Datos del usuario autenticado actualizados.")
-            data = LoginResponseSerializer(user).data
+            data = UserSerializer(user).data
             return Response(data, status=HTTP_200_OK)
         logger.error("Error al actualizar datos del usuario autenticado: %s", serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
@@ -69,7 +69,7 @@ class UserDetailView(APIView):
         if serializer.is_valid():
             serializer.save()
             logger.info("Datos del usuario autenticado actualizados.")
-            return Response(LoginResponseSerializer(user).data, status=HTTP_200_OK)
+            return Response(UserSerializer(user).data, status=HTTP_200_OK)
         logger.error("Error al actualizar datos del usuario autenticado: %s", serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -133,7 +133,7 @@ class UploadProfilePictureView(APIView):
 
         return Response({
             "message": "Imagen de perfil subida y asignada correctamente.",
-            "imageUrl": f"http://{request.get_host()}/media/public/{filename}"
+            "imageUrl": f"http://3.17.152.152/media/public/{filename}"
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------

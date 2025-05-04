@@ -153,7 +153,7 @@ class LoginResponseSerializer(serializers.ModelSerializer):
             nombre_logico = obj.image.nombre_logico
             extension = obj.image.extension.strip('.') if obj.image.extension else 'jpg'
             if nombre_logico:
-                return f"{request.scheme}://{request.get_host()}/media/public/{nombre_logico}.{extension}"
+                return f"http://3.17.152.152/media/public/{nombre_logico}.{extension}"
         return None
 
     def get_dailySteps(self, obj):
@@ -213,7 +213,7 @@ class UserSerializer(serializers.ModelSerializer):
             nombre_logico = obj.image.nombre_logico
             extension = obj.image.extension.strip('.') if obj.image.extension else 'jpg'
             if nombre_logico:
-                return f"{request.scheme}://{request.get_host()}/media/public/{nombre_logico}.{extension}"
+                return f"http://3.17.152.152/media/public/{nombre_logico}.{extension}"
         return None
     
     def get_dailySteps(self, obj):
@@ -884,7 +884,7 @@ class PublicUserProfileSerializer(serializers.ModelSerializer):
     def get_profilePicture(self, obj):
         request = self.context.get("request")
         if obj.image and obj.image.nombre_logico:
-            return f"{request.scheme}://{request.get_host()}/media/public/{obj.image.nombre_logico}{obj.image.extension.strip('.') and '.' or ''}{obj.image.extension}"
+            return f"http://3.17.152.152/media/public/{obj.image.nombre_logico}{obj.image.extension.strip('.') and '.' or ''}{obj.image.extension}"
         return None
 
     def get_leaderBoardPosition(self, obj):
