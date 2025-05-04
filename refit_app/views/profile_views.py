@@ -116,7 +116,7 @@ class UploadProfilePictureView(APIView):
         user_id = request.user.id
         nombre_logico = f"{user_id}_profile"
         filename = f"{nombre_logico}{ext}"
-        ruta_publica = os.path.join("public", filename)
+        ruta_publica = os.path.join("/public/", filename)
         ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_publica)
 
         # Eliminar archivo anterior si existe
