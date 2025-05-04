@@ -99,13 +99,14 @@ class UserDetailView(APIView):
 class UploadProfilePictureView(APIView):
     """
     Permite subir una imagen de perfil directamente desde la app (multipart/form-data).
-    Guarda el archivo en /media/public/ y la asigna al perfil del usuario autenticado.
-    Si hay imágenes anteriores, las elimina lógicamente o físicamente.
+    Reemplaza el archivo anterior en /media/public/, elimina su registro en la base,
+    guarda la nueva imagen con el mismo nombre fijo y la asigna al usuario autenticado.
     """
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
         archivo = request.FILES.get("image")
+
         if not archivo:
             return Response({"error": "No se ha enviado ninguna imagen."}, status=HTTP_400_BAD_REQUEST)
 
@@ -116,18 +117,18 @@ class UploadProfilePictureView(APIView):
         user_id = request.user.id
         nombre_logico = f"{user_id}_profile"
         filename = f"{nombre_logico}{ext}"
-        ruta_publica = os.path.join("/public/", filename)
-        ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_publica)
+        ruta_publica = os.path.join("public", filename)
+        ruta_completa = os.path.join(settings.MEDIA_ROOT, ruta_publica)
 
-        # Eliminar archivo anterior si existe
-        if os.path.exists(ruta_absoluta):
-            os.remove(ruta_absoluta)
+        # Borrar archivo físico anterior (si existe)
+        if os.path.exists(ruta_completa):
+            os.remove(ruta_completa)
 
-        # Eliminar registro anterior en la base de datos
+        # Borrar registro anterior en la tabla IMAGENES (si existe)
         if request.user.image_id:
             Imagen.objects.filter(pk=request.user.image_id).delete()
 
-        # Guardar nueva imagen en la misma ruta
+        # Guardar nuevo archivo con mismo nombre fijo
         default_storage.save(ruta_publica, ContentFile(archivo.read()))
 
         # Crear nuevo registro Imagen
@@ -137,7 +138,7 @@ class UploadProfilePictureView(APIView):
             nombre_logico=nombre_logico
         )
 
-        # 🔗 Asignar imagen al usuario
+        # Asignar nueva imagen al usuario
         request.user.image = nueva_imagen
         request.user.save()
 
