@@ -58,7 +58,7 @@ class RegisterView(APIView):
 
             return Response({"message": "Usuario registrado exitosamente."}, status=HTTP_200_OK)
         
-        logger.error("Error al registrar usuario: %s", serializer.errors)
+        logger.warning("Registro fallido. Datos: %s | Errores: %s", request.data, serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 # --------------------------------------------------------------------------
