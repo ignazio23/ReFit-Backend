@@ -7,6 +7,7 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 )
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import AccessToken
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
@@ -41,26 +42,112 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------------------------------
 class RegisterView(APIView):
     """
-    Permite registrar un nuevo usuario en la plataforma.
-    Retorna la información del usuario en formato LoginResponseSerializer.
+    Permite registrar un nuevo usuario con validación de código de referido.
+    Envía un mail de activación tras un registro exitoso.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
-        """
-        Registra un nuevo usuario con los datos proporcionados.
-        Valida los datos y crea un nuevo usuario en la base de datos.
-        """
-        serializer = UserRegisterSerializer(data=request.data)
+        data = request.data.copy()
+
+        # Validar código de referido (si viene)
+        referral_code = data.get("referralCode")
+        if referral_code:
+            try:
+                referente = User.objects.get(codigo_referido=referral_code, is_active=True)
+                data["fk_usuario_referente"] = referente.pk
+            except User.DoesNotExist:
+                return Response({"error": "Código de referido inexistente."}, status=HTTP_400_BAD_REQUEST)
+
+        serializer = UserRegisterSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
-            logger.info("Usuario registrado exitosamente: %s", user.email)
 
-            return Response({"message": "Usuario registrado exitosamente."}, status=HTTP_200_OK)
-        
-        logger.warning("Registro fallido. Datos: %s | Errores: %s", request.data, serializer.errors)
+            # Generar token y link de activación
+            token = RefreshToken.for_user(user).access_token
+            activation_link = f"https://refit.lat/activate-account?token={str(token)}"
+
+            # Enviar mail de activación
+            try:
+                send_mail(
+                    subject="Confirmá tu cuenta en ReFit",
+                    message=(
+                        f"¡Hola {user.nombre}!\n\n"
+                        "Gracias por registrarte en ReFit.\n\n"
+                        "Para activar tu cuenta, hacé clic en el siguiente enlace:\n\n"
+                        f"{activation_link}\n\n"
+                        "Si no te registraste, podés ignorar este mensaje."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False
+                )
+            except Exception as e:
+                logger.error(f"Error al enviar mail de activación: {e}")
+
+            logger.info("Usuario registrado correctamente: %s", user.email)
+            return Response({
+                "message": "Registro exitoso. Por favor, activá tu cuenta desde el enlace enviado por correo."
+            }, status=HTTP_200_OK)
+
+        logger.warning("Error en el registro: %s | Errores: %s", request.data, serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
+# --------------------------------------------------------------------------
+# Activación de cuenta
+# --------------------------------------------------------------------------
+class ActivateAccountView(APIView):
+    """
+    Activa la cuenta del usuario mediante el token enviado por mail.
+    Envía un segundo correo de bienvenida tras la activación.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        token = request.query_params.get("token")
+
+        if not token:
+            return Response({"error": "Token faltante."}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            user = User.objects.get(pk=user_id)
+
+            if user.is_active:
+                return Response({"message": "La cuenta ya fue activada."}, status=HTTP_200_OK)
+
+            user.is_active = True
+            user.save()
+
+            # Enviar mail de bienvenida
+            try:
+                send_mail(
+                    subject="¡Bienvenido a ReFit!",
+                    message=(
+                        f"¡Hola {user.nombre}!\n\n"
+                        "Tu cuenta fue activada con éxito.\n\n"
+                        "Recordá tener instalada alguna app de seguimiento de pasos como:\n"
+                        "- Google Fit (Android)\n"
+                        "- Apple Health (iOS)\n"
+                        "- Strava o Garmin (opcional)\n\n"
+                        "⚠️ IMPORTANTE: Si no utilizás la app durante más de 30 días, tu cuenta puede ser desactivada automáticamente por seguridad.\n\n"
+                        "¡Ya podés empezar a sumar pasos y ganar recompensas!"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False
+                )
+            except Exception as e:
+                logger.error(f"Error al enviar mail de bienvenida: {e}")
+
+            logger.info("Cuenta activada para el usuario: %s", user.email)
+            return Response({"message": "Cuenta activada correctamente."}, status=HTTP_200_OK)
+
+        except Exception as e:
+            logger.warning(f"Token inválido o expirado: {e}")
+            return Response({"error": "Token inválido o expirado."}, status=HTTP_400_BAD_REQUEST)
+        
 # --------------------------------------------------------------------------
 # Inicio de sesión
 # --------------------------------------------------------------------------

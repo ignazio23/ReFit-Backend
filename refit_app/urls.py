@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
 from refit_app.views.auth_views import (
     RegisterView, LoginView, LogOutView, ChangePasswordView,
-    PasswordRecoveryView
+    PasswordRecoveryView, ActivateAccountView
 )
 from refit_app.views.profile_views import (
     UserDetailView, EditDailyGoalView, PublicUserProfileView,
@@ -46,6 +46,7 @@ urlpatterns = [
         path("logout/", LogOutView.as_view(), name="logout"),                                   # POST
         path("update-password/", ChangePasswordView.as_view(), name="change-password"),         # PATCH
         path("reset-password/", PasswordRecoveryView.as_view(), name="reset-password"),         # POST
+        path("activate-account/", ActivateAccountView.as_view(), name="activate-account"),      # POST
         # Endpoint de TOKENS JWT
         path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),                # POST
         path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),               # POST

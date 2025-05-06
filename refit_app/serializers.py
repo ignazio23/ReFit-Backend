@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.validators import UniqueValidator
 from refit_app.models import (
     User, Pasos, Producto, Categoria, Imagen, Parametro, UsuarioObjetivoDiario,
@@ -36,7 +37,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all(), message="El email ingresado ya existe. Por favor, use otro email.")]
     )
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password = serializers.CharField(write_only=True, required=True)
     name = serializers.CharField(source='nombre')
     surname = serializers.CharField(source='apellidos')
     birthDate = serializers.DateField(source='fecha_nacimiento')
@@ -55,12 +56,27 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     
     def validate_password(self, value):
         """
-        Valida que la contraseña tenga al menos 8 caracteres.
+        Valida la contraseña usando los validadores de Django,
+        y traduce errores comunes a mensajes personalizados.
         """
-        if len(value) < 8:
-            raise serializers.ValidationError("La contraseña debe tener al menos 8 caracteres.")
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError([self.traducir_mensaje(msg) for msg in e.messages])
         return value
 
+    def traducir_mensaje(self, msg):
+        traducciones = {
+            "This password is too common.": "La contraseña es demasiado común.",
+            "This password is entirely numeric.": "La contraseña no puede ser solo números.",
+            "This password is too short. It must contain at least 8 characters.":
+                "La contraseña debe tener al menos 8 caracteres.",
+            "The password is too similar to the email address.": "La contraseña es muy similar al correo.",
+            "The password is too similar to the first name.": "La contraseña es muy similar al nombre.",
+            "The password is too similar to the last name.": "La contraseña es muy similar al apellido.",
+        }
+        return traducciones.get(msg, msg)
+    
     def create(self, validated_data):
         referral_code = validated_data.pop("codigo_referido", "").strip()
         referente = None
