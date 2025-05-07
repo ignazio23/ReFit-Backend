@@ -38,6 +38,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         error_messages={
             "invalid": "Ingresá un correo electrónico válido.",
             "required": "El correo electrónico es obligatorio.",
+            "blank": "El correo electrónico es obligatorio."
         },
         validators=[
             UniqueValidator(
@@ -83,14 +84,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def traducir_mensaje(self, msg):
         traducciones = {
-            "This password is too common.": "La contraseña es demasiado sencilla. Intentá con añadir Mayúsculas o Símbolos.",
-            "This password is entirely numeric.": "La contraseña no puede ser solo números.",
-            "This password is too short. It must contain at least 8 characters.":
-                "La contraseña debe tener al menos 8 caracteres.",
-            "The password is too similar to the email address.": "La contraseña es muy similar al correo.",
-            "The password is too similar to the first name.": "La contraseña es muy similar al nombre.",
-            "The password is too similar to the last name.": "La contraseña es muy similar al apellido.",
-            "This password is too similar to the username.": "La contraseña es muy similar al nombre de usuario.",
+            "Esta contraseña es demasiado común.": "La contraseña es demasiado sencilla. Intentá con añadir Mayúsculas o Símbolos.",
         }
         return traducciones.get(msg, msg)
     
