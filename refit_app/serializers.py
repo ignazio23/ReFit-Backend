@@ -35,7 +35,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     """
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all(), message="El email ingresado ya existe. Por favor, use otro email.")]
+        error_messages={
+            "invalid": "Ingresá un correo electrónico válido.",
+            "required": "El correo electrónico es obligatorio.",
+        },
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="El email ingresado ya existe. Por favor, usá otro."
+            )
+        ]
     )
     password = serializers.CharField(write_only=True, required=True)
     name = serializers.CharField(source='nombre')
@@ -74,7 +83,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def traducir_mensaje(self, msg):
         traducciones = {
-            "This password is too common.": "La contraseña es demasiado común.",
+            "This password is too common.": "La contraseña es demasiado sencilla. Intentá con añadir Mayúsculas o Símbolos.",
             "This password is entirely numeric.": "La contraseña no puede ser solo números.",
             "This password is too short. It must contain at least 8 characters.":
                 "La contraseña debe tener al menos 8 caracteres.",
