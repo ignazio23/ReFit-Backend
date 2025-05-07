@@ -57,12 +57,19 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate_password(self, value):
         """
         Valida la contraseña usando los validadores de Django,
-        y traduce errores comunes a mensajes personalizados.
+        incluyendo validadores que dependen de los datos del usuario.
         """
+        user_data = {
+            'email': self.initial_data.get('email', ''),
+            'nombre': self.initial_data.get('name', ''),
+            'apellidos': self.initial_data.get('surname', '')
+        }
+
         try:
-            validate_password(value)
+            validate_password(value, user=User(**user_data))
         except DjangoValidationError as e:
             raise serializers.ValidationError([self.traducir_mensaje(msg) for msg in e.messages])
+        
         return value
 
     def traducir_mensaje(self, msg):
@@ -103,27 +110,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             if not User.objects.filter(codigo_referido=nuevo_codigo).exists():
                 return nuevo_codigo
 
-# ------------------------------------------------------------------------------
-# Registro: Serializador de respuesta - COMENTADO DEBIDO A QUE NO SE ESTA UTILIZANDO MÁS
-# ------------------------------------------------------------------------------
-# Serializador simple para retornar tras el registro de usuario.
-# Incluye campos básicos como id, email, nombre y apellidos.
-# Este serializador se utiliza para mostrar la información del usuario
-# después de un registro exitoso.
-"""
-class RegisterResponseSerializer(serializers.ModelSerializer):
-    def get_profilePicture(self, obj):
-        if obj.image and obj.image.uuid:
-            return obj.image.uuid
-        return None
-    profilePicture = serializers.SerializerMethodField()
-    ""
-    Serializador simple para retornar tras el registro de usuario.
-    ""
-    class Meta:
-        model = User
-        fields = ('id', 'email', 'nombre', 'apellidos', 'fecha_nacimiento', 'genero', 'codigo_referido', 'profilePicture')
-"""
 # ------------------------------------------------------------------------------
 # Login: Serializador de respuesta
 # ------------------------------------------------------------------------------

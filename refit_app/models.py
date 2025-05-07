@@ -89,6 +89,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     lock_date = models.DateTimeField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
+    is_authenticated = models.BooleanField(default=False, help_text="Indica si el usuario confirmó su cuenta por email.")
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)

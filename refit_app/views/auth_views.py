@@ -63,6 +63,10 @@ class RegisterView(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
+            # Marcar cuenta como no verificada por email
+            user.is_authenticated = False
+            user.save()
+
             # Generar token y link de activación
             token = RefreshToken.for_user(user).access_token
             activation_link = f"https://refit.lat/activate-account?token={str(token)}"
@@ -114,10 +118,10 @@ class ActivateAccountView(APIView):
             user_id = access_token['user_id']
             user = User.objects.get(pk=user_id)
 
-            if user.is_active:
+            if user.is_authenticated:
                 return Response({"message": "La cuenta ya fue activada."}, status=HTTP_200_OK)
 
-            user.is_active = True
+            user.is_authenticated = True
             user.save()
 
             # Enviar mail de bienvenida
@@ -171,18 +175,21 @@ class LoginView(APIView):
         if user:
             # Validación de bloqueos y reactivación automática
             if not user.is_active:
-                return Response({"detail": "Cuenta desactivada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
-
-            if user.blocked:
-                if user.lock_date and timezone.now() - user.lock_date < timedelta(days=30):
-                    user.blocked = False
-                    user.lock_date = None
-                    logger.info("Usuario %s reactivado durante el período de gracia.", user.email)
+                if user.blocked and user.lock_date:
+                    # Está bloqueado y dentro del período de gracia
+                    if timezone.now() - user.lock_date < timedelta(days=30):
+                        user.is_active = True
+                        user.blocked = False
+                        user.lock_date = None
+                        user.save()
+                        logger.info("Usuario %s reactivado durante el período de gracia.", user.email)
+                    else:
+                        logger.warning("Usuario %s intentó iniciar sesión tras el plazo de 30 días.", user.email)
+                        return Response({"detail": "Cuenta eliminada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
                 else:
-                    user.is_active = False
-                    user.save()
-                    logger.warning("Usuario %s intentó iniciar sesión tras el plazo de 30 días.", user.email)
-                    return Response({"detail": "Cuenta eliminada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
+                    # Usuario inactivo pero no bloqueado = cuenta eliminada o desactivada manualmente
+                    logger.warning("Intento de login con cuenta inactiva no bloqueada: %s", user.email)
+                    return Response({"detail": "Tu cuenta está desactivada."}, status=HTTP_401_UNAUTHORIZED)
 
             es_primer_login = user.first_login  # Captura el estado actual
 
