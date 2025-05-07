@@ -100,7 +100,7 @@ PASSWORD_HASHERS = [
 # --------------------------------------------------------------------------
 # Internacionalización y zona horaria
 # --------------------------------------------------------------------------
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 TIME_ZONE = 'America/Montevideo'
 USE_I18N = True
 #USE_L10N = True
