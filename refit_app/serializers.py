@@ -81,6 +81,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             "The password is too similar to the email address.": "La contraseña es muy similar al correo.",
             "The password is too similar to the first name.": "La contraseña es muy similar al nombre.",
             "The password is too similar to the last name.": "La contraseña es muy similar al apellido.",
+            "Enter a valid email address.": "Ingrese una dirección de correo válida.",
         }
         return traducciones.get(msg, msg)
     
