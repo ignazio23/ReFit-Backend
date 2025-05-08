@@ -85,7 +85,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def traducir_mensaje(self, msg):
         traducciones = {
             "Esta contraseña es demasiado común.": "La contraseña es demasiado sencilla. Intentá con añadir Mayúsculas o Símbolos.",
-            "Esta contraseña no puede ser completamente numérica.": "La contraseña no puede ser solo números.",
+            "Esta contraseña es completamente numérica.": "La contraseña no puede ser solo numérica.",
         }
         return traducciones.get(msg, msg)
     
