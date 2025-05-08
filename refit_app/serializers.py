@@ -86,6 +86,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         traducciones = {
             "Esta contraseña es demasiado común.": "La contraseña es demasiado sencilla. Intentá con añadir Mayúsculas o Símbolos.",
             "Esta contraseña es completamente numérica.": "La contraseña no puede ser solo numérica.",
+            "La contraseña es demasiado similar a la de Email.": "La contraseña no puede ser similar a tu Email.",
         }
         return traducciones.get(msg, msg)
     
