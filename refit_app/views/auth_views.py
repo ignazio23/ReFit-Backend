@@ -164,60 +164,62 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        """
-        Autenticación de usuario mediante email y contraseña.
-        Valida las credenciales y actualiza la información de inicio de sesión.
-        """
         email = request.data.get("email")
         password = request.data.get("password")
         user = authenticate(email=email, password=password)
 
         if user:
-            # Validación de bloqueos y reactivación automática
+            # Caso 1: Cuenta ya desactivada definitivamente
             if not user.is_active:
-                if user.blocked and user.lock_date:
-                    # Está bloqueado y dentro del período de gracia
-                    if timezone.now() - user.lock_date < timedelta(days=30):
-                        user.is_active = True
-                        user.blocked = False
-                        user.lock_date = None
-                        user.save()
-                        logger.info("Usuario %s reactivado durante el período de gracia.", user.email)
-                    else:
-                        logger.warning("Usuario %s intentó iniciar sesión tras el plazo de 30 días.", user.email)
-                        return Response({"detail": "Cuenta eliminada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
+                logger.warning("Intento de login con cuenta desactivada: %s", user.email)
+                return Response({"detail": "Cuenta eliminada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
+
+            # Caso 2: Usuario en proceso de eliminación lógica
+            if user.blocked and user.lock_date:
+                dias_pasados = timezone.now() - user.lock_date
+                if dias_pasados < timedelta(days=30):
+                    # Reactivación dentro del período de gracia
+                    user.blocked = False
+                    user.lock_date = None
+                    user.save()
+                    logger.info("Usuario %s reactivado dentro de los 30 días de gracia.", user.email)
                 else:
-                    # Usuario inactivo pero no bloqueado = cuenta eliminada o desactivada manualmente
-                    logger.warning("Intento de login con cuenta inactiva no bloqueada: %s", user.email)
-                    return Response({"detail": "Tu cuenta está desactivada."}, status=HTTP_401_UNAUTHORIZED)
+                    # Eliminación definitiva
+                    original_email = user.email
+                    contador = 0
+                    while True:
+                        prefijo = f"UserInactive{contador}_" if contador > 0 else "UserInactive_"
+                        nuevo_email = f"{prefijo}{original_email}"
+                        if not User.objects.filter(email=nuevo_email).exists():
+                            user.email = nuevo_email
+                            break
+                        contador += 1
 
-            es_primer_login = user.first_login  # Captura el estado actual
+                    user.is_active = False
+                    user.save()
 
-            # Genera tokens de acceso y actualización
+                    logger.warning("Usuario %s eliminado definitivamente tras 30 días.", original_email)
+                    return Response({"detail": "Cuenta eliminada permanentemente. Deberás generar una nueva."}, status=HTTP_401_UNAUTHORIZED)
+
+            # Resto del flujo normal
+            es_primer_login = user.first_login
+
             tokens = RefreshToken.for_user(user)
-
-            # Serializar datos del usuario
             serializer = LoginResponseSerializer(user, context={'request': request})
             data = serializer.data
-
             data["accessToken"] = str(tokens.access_token)
             data["refreshToken"] = str(tokens)
 
-            # Intentar marcar objetivo cualitativo como completado
+            # Marcar objetivo cualitativo si corresponde
             try:
-                serializer = QualitativeObjectiveSerializer(
-                    data={"requisito": "login"},
-                    context={"request": request}
-                )
-                if serializer.is_valid():
-                    for tarea in serializer.tareas_qualitativas:
+                obj_serializer = QualitativeObjectiveSerializer(data={"requisito": "login"}, context={"request": request})
+                if obj_serializer.is_valid():
+                    for tarea in obj_serializer.tareas_qualitativas:
                         tarea.fecha_completado = date.today()
                         tarea.save()
-                    logger.info("Objetivo cualitativo 'login' completado para %s", user.email)
             except Exception as e:
                 logger.warning("No se pudo completar objetivo cualitativo: %s", e)
 
-            # Luego de generar la respuesta, actualizamos
             if es_primer_login:
                 user.first_login = False
 
@@ -226,7 +228,7 @@ class LoginView(APIView):
 
             logger.info("Usuario autenticado: %s", user.email)
             return Response(data, status=HTTP_200_OK)
-        
+
         logger.warning("Credenciales inválidas para el email: %s", email)
         return Response({"detail": "Credenciales inválidas."}, status=HTTP_401_UNAUTHORIZED)
 
