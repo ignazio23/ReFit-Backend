@@ -293,7 +293,7 @@ class EditProductImageView(APIView):
         )
 
         return Response({
-            "detail": "Imagen del producto actualizada correctamente.",
+            "message": "Imagen del producto actualizada correctamente.",
             "image_url": f"/media/{imagen.uuid}{imagen.extension}"
         }, status=HTTP_200_OK)
 

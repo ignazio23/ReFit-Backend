@@ -80,10 +80,10 @@ class UserDetailView(APIView):
         """
         user = request.user
         if not user.is_active:
-            return Response({"detail": "La cuenta ya fue desactivada permanentemente."}, status=HTTP_400_BAD_REQUEST)
+            return Response({"error": "La cuenta ya fue desactivada permanentemente."}, status=HTTP_400_BAD_REQUEST)
 
         if user.blocked:
-            return Response({"detail": "Tu cuenta ya está en proceso de eliminación."}, status=HTTP_200_OK)
+            return Response({"message": "Tu cuenta ya está en proceso de eliminación."}, status=HTTP_200_OK)
 
         user.blocked = True
         user.lock_date = timezone.now()
@@ -148,28 +148,6 @@ class UploadProfilePictureView(APIView):
         }, status=HTTP_200_OK)
 
 # --------------------------------------------------------------------------
-# Edición de datos y objetivo diario - Se unifica en UserDetailView
-# --------------------------------------------------------------------------
-"""
-class EditPersonalDataView(APIView):
-    ""
-    Permite actualizar nombre, apellidos y email del usuario autenticado.
-    ""
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request):
-        ""
-        Actualiza los datos personales del usuario autenticado.
-        ""
-        serializer = EditPersonalDataSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            logger.info("Datos personales actualizados para el usuario %s.", request.user.email)
-            return Response({"detail": "Datos actualizados correctamente"}, status=HTTP_200_OK)
-        logger.error("Error al actualizar datos personales para el usuario %s: %s", request.user.email, serializer.errors)
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-"""
-# --------------------------------------------------------------------------
 # Edición del objetivo diario
 # --------------------------------------------------------------------------
 class EditDailyGoalView(APIView):
@@ -186,7 +164,7 @@ class EditDailyGoalView(APIView):
         if serializer.is_valid():
             serializer.save()
             logger.info("Objetivo diario actualizado para el usuario %s.", request.user.email)
-            return Response({"detail": "Objetivo diario actualizado"}, status=HTTP_200_OK)
+            return Response({"message": "Objetivo diario actualizado"}, status=HTTP_200_OK)
         logger.error("Error al actualizar objetivo diario para el usuario %s: %s", request.user.email, serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
     

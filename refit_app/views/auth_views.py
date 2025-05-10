@@ -231,13 +231,13 @@ class LoginView(APIView):
             if not user.is_authenticated:
                 logger.warning("Intento de login sin autenticación: %s", user.email)
                 return Response({
-                    "detail": "Verifica tu Cuenta, Revisa tu Casilla de Correo."
+                    "error": "Verifica tu Cuenta, Revisa tu Casilla de Correo."
                 }, status=HTTP_400_BAD_REQUEST)
             
             # Caso 1: Cuenta ya desactivada definitivamente
             if not user.is_active:
                 logger.warning("Intento de login con cuenta desactivada: %s", user.email)
-                return Response({"detail": "Cuenta eliminada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
+                return Response({"error": "Cuenta eliminada permanentemente."}, status=HTTP_401_UNAUTHORIZED)
 
             # Caso 2: Usuario en proceso de eliminación lógica
             if user.blocked and user.lock_date:
@@ -264,7 +264,7 @@ class LoginView(APIView):
                     user.save()
 
                     logger.warning("Usuario %s eliminado definitivamente tras 30 días.", original_email)
-                    return Response({"detail": "Cuenta eliminada permanentemente. Deberás generar una nueva."}, status=HTTP_401_UNAUTHORIZED)
+                    return Response({"error": "Cuenta eliminada permanentemente. Deberás generar una nueva."}, status=HTTP_401_UNAUTHORIZED)
 
             # Resto del flujo normal
             es_primer_login = user.first_login
@@ -295,7 +295,7 @@ class LoginView(APIView):
             return Response(data, status=HTTP_200_OK)
 
         logger.warning("Credenciales inválidas para el email: %s", email)
-        return Response({"detail": "Credenciales inválidas."}, status=HTTP_401_UNAUTHORIZED)
+        return Response({"error": "Credenciales inválidas."}, status=HTTP_401_UNAUTHORIZED)
 
 # --------------------------------------------------------------------------
 # Cierre de Sesión
@@ -337,13 +337,13 @@ class ChangePasswordView(APIView):
 
             if not request.user.check_password(oldPassword ):
                 logger.warning("Intento fallido de cambio de contraseña para: %s", request.user.email)
-                return Response({"detail": "Contraseña actual incorrecta"}, status=HTTP_400_BAD_REQUEST)
+                return Response({"error": "Contraseña actual incorrecta"}, status=HTTP_400_BAD_REQUEST)
 
             request.user.set_password(newPassword)
             request.user.update_password = False
             request.user.save()
             logger.info("Contraseña actualizada para el usuario: %s", request.user.email)
-            return Response({"detail": "Contraseña actualizada exitosamente"}, status=HTTP_200_OK)
+            return Response({"error": "Contraseña actualizada exitosamente"}, status=HTTP_200_OK)
         logger.error("Error al cambiar contraseña para el usuario %s: %s", request.user.email, serializer.errors)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 

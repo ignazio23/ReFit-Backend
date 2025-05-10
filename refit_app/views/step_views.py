@@ -116,7 +116,7 @@ class StepUpdateView(APIView):
             logger.info("%s agregó %s pasos (x%.1f). Monedas: +%s", request.user.email, total_nuevos_pasos, multiplicador, monedas_adicionales)
 
             return Response({
-                "detail": "Pasos actualizados correctamente.",
+                "message": "Pasos actualizados correctamente.",
                 "totalSteps": request.user.pasos_totales,
                 "monthlySteps": calcular_pasos_mensuales(request.user),
                 "coins": request.user.monedas_actuales
