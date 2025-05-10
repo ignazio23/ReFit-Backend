@@ -69,7 +69,8 @@ class RegisterView(APIView):
             user.save()
 
             # Generar token y link de activación
-            token = RefreshToken.for_user(user).access_token
+            token = AccessToken.for_user(user)
+            token.set_exp(lifetime=timedelta(hours=1))  # Token válido por 1 hora
             activation_link = f"https://refit.lat/activate-account?token={str(token)}"
 
             # Enviar mail de activación
@@ -160,6 +161,8 @@ class ActivateAccountView(APIView):
                 if user.activation_attempts >= 3:
                     user.is_active = False
                     user.save()
+
+                    # Enviar mail de bloqueo
                     send_mail(
                         subject="Cuenta bloqueada por múltiples intentos",
                         message=(
@@ -171,15 +174,19 @@ class ActivateAccountView(APIView):
                         recipient_list=[user.email],
                         fail_silently=True
                     )
+
                     logger.warning("Usuario %s bloqueado por múltiples intentos de activación.", user.email)
                     return Response({"error": "Cuenta bloqueada por múltiples intentos."}, status=HTTP_400_BAD_REQUEST)
 
                 # Reintentar: generar nuevo token
                 user.activation_attempts += 1
                 user.save()
-                new_token = RefreshToken.for_user(user).access_token
+
+                new_token = AccessToken.for_user(user)
+                new_token.set_exp(lifetime=timedelta(hours=1))
                 activation_link = f"https://refit.lat/activate-account?token={str(new_token)}"
 
+                # Enviar nuevo mail de activación
                 send_mail(
                     subject="Reenvío de activación de cuenta",
                     message=(
@@ -192,9 +199,16 @@ class ActivateAccountView(APIView):
                     recipient_list=[user.email],
                     fail_silently=True
                 )
-                return Response({"message": "Token expirado. Se ha enviado un nuevo enlace de activación."}, status=HTTP_200_OK)
+                
+                logger.info("Reenvío de activación a %s. Intento #%s", user.email, user.activation_attempts)
+                return Response({
+                    "message": "Token expirado. Se ha enviado un nuevo enlace de activación.",
+                    "retries_left": 3 - user.activation_attempts
+                }, status=HTTP_200_OK)
+
             except Exception:
-                return Response({"error": "Token inválido o el usuario no existe."}, status=HTTP_400_BAD_REQUEST)
+                logger.exception("Error al manejar token expirado.")
+                return Response({"error": "Token inválido o usuario no encontrado."}, status=HTTP_400_BAD_REQUEST)
 
 # --------------------------------------------------------------------------
 # Inicio de sesión
@@ -217,7 +231,7 @@ class LoginView(APIView):
             if not user.is_authenticated:
                 logger.warning("Intento de login sin autenticación: %s", user.email)
                 return Response({
-                    "detail": "Usuario no autenticado, confirme su cuenta por medio del link enviado a su mail."
+                    "detail": "Verifica tu Cuenta, Revisa tu Casilla de Correo."
                 }, status=HTTP_400_BAD_REQUEST)
             
             # Caso 1: Cuenta ya desactivada definitivamente
