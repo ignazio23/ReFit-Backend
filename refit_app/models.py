@@ -91,6 +91,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_authenticated = models.BooleanField(default=False, help_text="Indica si el usuario confirmó su cuenta por email.")
 
+    activation_attempts = models.PositiveIntegerField(default=0)
+
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 

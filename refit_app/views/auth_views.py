@@ -13,6 +13,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 import uuid
 from datetime import timedelta, date
+import jwt
 from django.core.mail import EmailMultiAlternatives
 
 from refit_app.models import User, PasswordRecovery
@@ -122,6 +123,7 @@ class ActivateAccountView(APIView):
                 return Response({"message": "La cuenta ya fue activada."}, status=HTTP_200_OK)
 
             user.is_authenticated = True
+            user.activation_attempts = 0
             user.save()
 
             # Enviar mail de bienvenida
@@ -149,9 +151,51 @@ class ActivateAccountView(APIView):
             return Response({"message": "Cuenta activada correctamente."}, status=HTTP_200_OK)
 
         except Exception as e:
-            logger.warning(f"Token inválido o expirado: {e}")
-            return Response({"error": "Token inválido o expirado."}, status=HTTP_400_BAD_REQUEST)
-        
+            try:
+                # Intentar recuperar el usuario desde el token manualmente
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+                user_id = payload.get("user_id")
+                user = User.objects.get(pk=user_id)
+
+                if user.activation_attempts >= 3:
+                    user.is_active = False
+                    user.save()
+                    send_mail(
+                        subject="Cuenta bloqueada por múltiples intentos",
+                        message=(
+                            "Múltiples intentos fallidos, debido a esta situación su cuenta ha sido bloqueada.\n"
+                            "En el caso de que crea que esto es un error, deberá comunicarse con Soporte al mail: info@refit.lat\n"
+                            "Esperamos poder solucionar su problema."
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=True
+                    )
+                    logger.warning("Usuario %s bloqueado por múltiples intentos de activación.", user.email)
+                    return Response({"error": "Cuenta bloqueada por múltiples intentos."}, status=HTTP_400_BAD_REQUEST)
+
+                # Reintentar: generar nuevo token
+                user.activation_attempts += 1
+                user.save()
+                new_token = RefreshToken.for_user(user).access_token
+                activation_link = f"https://refit.lat/activate-account?token={str(new_token)}"
+
+                send_mail(
+                    subject="Reenvío de activación de cuenta",
+                    message=(
+                        f"Hola {user.nombre},\n\n"
+                        "Este es un nuevo enlace para activar tu cuenta:\n"
+                        f"{activation_link}\n\n"
+                        "Por seguridad, este enlace tiene un tiempo limitado de validez."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=True
+                )
+                return Response({"message": "Token expirado. Se ha enviado un nuevo enlace de activación."}, status=HTTP_200_OK)
+            except Exception:
+                return Response({"error": "Token inválido o el usuario no existe."}, status=HTTP_400_BAD_REQUEST)
+
 # --------------------------------------------------------------------------
 # Inicio de sesión
 # --------------------------------------------------------------------------
@@ -169,6 +213,13 @@ class LoginView(APIView):
         user = authenticate(email=email, password=password)
 
         if user:
+            # Caso 0: Usuario no autenticado (no verificado)
+            if not user.is_authenticated:
+                logger.warning("Intento de login sin autenticación: %s", user.email)
+                return Response({
+                    "detail": "Usuario no autenticado, confirme su cuenta por medio del link enviado a su mail."
+                }, status=HTTP_400_BAD_REQUEST)
+            
             # Caso 1: Cuenta ya desactivada definitivamente
             if not user.is_active:
                 logger.warning("Intento de login con cuenta desactivada: %s", user.email)
